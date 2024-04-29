@@ -19,6 +19,7 @@ public class Driver {
 	String name;
 	String last_name;
 	LocalDate birthdate;
+	int age;
 	String nationality;
 	int number;
 	int races;
@@ -154,6 +155,14 @@ public class Driver {
 
 	public void setPoints(int points) {
 		this.points = points;
+	}
+
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
 	}
 	
 }

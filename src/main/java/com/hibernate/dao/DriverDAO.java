@@ -25,7 +25,7 @@ public class DriverDAO {
 		return driver;
 	}
 	
-	public static List<Driver> selectAllSeries() {
+	public static List<Driver> selectAllDrivers() {
 		Transaction transaction = null;
 		List<Driver> driverList = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
