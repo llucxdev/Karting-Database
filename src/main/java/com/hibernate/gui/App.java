@@ -49,9 +49,9 @@ class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
 public class App {
 
 	private JFrame frame;
-	DefaultTableModel model;
-	List<Driver> driverList;
+	DefaultTableModel driverModel;
 	JTable driversTable;
+	List<Driver> driverList;
 	UtilDateModel modelDatePicker;
 	JDatePickerImpl datePicker;
 	private JTextField textFieldName;
@@ -84,7 +84,7 @@ public class App {
 	}
 	
 	public void refreshDriverTable() {
-		model.setRowCount(0);
+		driverModel.setRowCount(0);
 		driverList = DriverDAO.selectAllDrivers();
 		driverList.forEach(d -> {
 			Object[] row = new Object[9];
@@ -97,7 +97,7 @@ public class App {
 			row[6] = d.getWins();
 			row[7] = d.getTeam();
 			row[8] = d.getKart();
-			model.addRow(row);
+			driverModel.addRow(row);
 		});
 	}
 
@@ -122,23 +122,23 @@ public class App {
 		tabbedPane.addTab("Teams", null, teamPanel, null);
 		teamPanel.setLayout(null);
 		
-		model = new DefaultTableModel() {
+		driverModel = new DefaultTableModel() {
 			@Override
 			public boolean isCellEditable(int row, int column) {
 				return false;
 			}
 		};
-		model.addColumn("ID");
-		model.addColumn("Name");
-		model.addColumn("Age");
-		model.addColumn("Laps");
-		model.addColumn("Races");
-		model.addColumn("Podiums");
-		model.addColumn("Wins");
-		model.addColumn("Team");
-		model.addColumn("Kart");
+		driverModel.addColumn("ID");
+		driverModel.addColumn("Name");
+		driverModel.addColumn("Age");
+		driverModel.addColumn("Laps");
+		driverModel.addColumn("Races");
+		driverModel.addColumn("Podiums");
+		driverModel.addColumn("Wins");
+		driverModel.addColumn("Team");
+		driverModel.addColumn("Kart");
 		
-		driversTable = new JTable(model);
+		driversTable = new JTable(driverModel);
 		driversTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		JScrollPane scrollPane = new JScrollPane(driversTable);
 		scrollPane.setBounds(12, 12, 1137, 350);

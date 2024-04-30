@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 @Table(name="driver")
 public class Driver {
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	int driver_id;
 	String name;
 	LocalDate dob;
@@ -29,9 +29,8 @@ public class Driver {
 		
 	}
 
-	public Driver(int driver_id, String name, LocalDate dob, int age, int laps, int races, int podiums, int wins,
+	public Driver(String name, LocalDate dob, int age, int laps, int races, int podiums, int wins,
 			int team, int kart) {
-		this.driver_id = driver_id;
 		this.name = name;
 		this.dob = dob;
 		this.age = age;
