@@ -25,6 +25,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
+import javax.swing.JTextField;
 
 class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
 	private String datePattern = "yyyy-MM-dd";
@@ -53,6 +54,11 @@ public class App {
 	JTable driversTable;
 	UtilDateModel modelDatePicker;
 	JDatePickerImpl datePicker;
+	private JTextField textFieldName;
+	private JTextField textFieldLaps;
+	private JTextField textFieldRaces;
+	private JTextField textFieldPodiums;
+	private JTextField textFieldWins;
 
 	/**
 	 * Launch the application.
@@ -100,12 +106,12 @@ public class App {
 	 */
 	private void initialize() {
 		frame = new JFrame();
-		frame.setBounds(100, 100, 1200, 900);
+		frame.setBounds(100, 100, 1200, 850);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 		
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.setBounds(12, 12, 1166, 846);
+		tabbedPane.setBounds(12, 12, 1166, 800);
 		frame.getContentPane().add(tabbedPane);
 		
 		JPanel driverPanel = new JPanel();
@@ -115,10 +121,6 @@ public class App {
 		JPanel teamPanel = new JPanel();
 		tabbedPane.addTab("Teams", null, teamPanel, null);
 		teamPanel.setLayout(null);
-		
-		JLabel lblTuMadre = new JLabel("Tu madre");
-		lblTuMadre.setBounds(189, 72, 70, 15);
-		teamPanel.add(lblTuMadre);
 		
 		model = new DefaultTableModel() {
 			@Override
@@ -143,39 +145,39 @@ public class App {
 		driverPanel.add(scrollPane);
 		
 		JLabel lblName = new JLabel("Name:");
-		lblName.setBounds(12, 384, 70, 15);
+		lblName.setBounds(12, 387, 70, 15);
 		driverPanel.add(lblName);
 		
 		JLabel lblBirth = new JLabel("Birth:");
-		lblBirth.setBounds(12, 411, 70, 15);
+		lblBirth.setBounds(12, 438, 70, 15);
 		driverPanel.add(lblBirth);
 		
 		JLabel lblLaps = new JLabel("Laps:");
-		lblLaps.setBounds(12, 448, 70, 15);
+		lblLaps.setBounds(12, 494, 70, 15);
 		driverPanel.add(lblLaps);
 		
 		JLabel lblRaces = new JLabel("Races");
-		lblRaces.setBounds(12, 475, 70, 15);
+		lblRaces.setBounds(12, 541, 70, 15);
 		driverPanel.add(lblRaces);
 		
 		JLabel lblPodiums = new JLabel("Podiums:");
-		lblPodiums.setBounds(12, 502, 70, 15);
+		lblPodiums.setBounds(12, 589, 70, 15);
 		driverPanel.add(lblPodiums);
 		
 		JLabel lblWins = new JLabel("Wins:");
-		lblWins.setBounds(12, 529, 70, 15);
+		lblWins.setBounds(12, 637, 70, 15);
 		driverPanel.add(lblWins);
 		
 		JButton btnAdd = new JButton("Add");
-		btnAdd.setBounds(118, 727, 117, 25);
+		btnAdd.setBounds(202, 706, 117, 25);
 		driverPanel.add(btnAdd);
 		
 		JButton btnUpdate = new JButton("Update");
-		btnUpdate.setBounds(399, 727, 117, 25);
+		btnUpdate.setBounds(521, 706, 117, 25);
 		driverPanel.add(btnUpdate);
 		
 		JButton btnDelete = new JButton("Delete");
-		btnDelete.setBounds(657, 727, 117, 25);
+		btnDelete.setBounds(840, 706, 117, 25);
 		driverPanel.add(btnDelete);
 		
 		modelDatePicker = new UtilDateModel();
@@ -185,8 +187,33 @@ public class App {
 		properties.put("text.year", "Year");
 		JDatePanelImpl datePanel = new JDatePanelImpl(modelDatePicker, properties);
 		datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-		datePicker.setBounds(80, 411, 150, 25);
+		datePicker.setBounds(85, 428, 150, 25);
 		driverPanel.add(datePicker);
+		
+		textFieldName = new JTextField();
+		textFieldName.setBounds(85, 382, 150, 25);
+		driverPanel.add(textFieldName);
+		textFieldName.setColumns(10);
+		
+		textFieldLaps = new JTextField();
+		textFieldLaps.setColumns(10);
+		textFieldLaps.setBounds(85, 492, 150, 25);
+		driverPanel.add(textFieldLaps);
+		
+		textFieldRaces = new JTextField();
+		textFieldRaces.setColumns(10);
+		textFieldRaces.setBounds(85, 539, 150, 25);
+		driverPanel.add(textFieldRaces);
+		
+		textFieldPodiums = new JTextField();
+		textFieldPodiums.setColumns(10);
+		textFieldPodiums.setBounds(85, 587, 150, 25);
+		driverPanel.add(textFieldPodiums);
+		
+		textFieldWins = new JTextField();
+		textFieldWins.setColumns(10);
+		textFieldWins.setBounds(85, 635, 150, 25);
+		driverPanel.add(textFieldWins);
 		
 		refreshDriverTable();
 	}
