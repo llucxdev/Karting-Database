@@ -29,13 +29,16 @@ public class DriverPanel extends JPanel{
 		model.setRowCount(0);
 		driverList = DriverDAO.selectAllDrivers();
 		driverList.forEach(d -> {
-			Object[] row = new Object[6];
+			Object[] row = new Object[9];
 			row[0] = d.getDriver_id();
 			row[1] = d.getName();
-			row[2] = d.getLast_name();
-			row[3] = d.getAge();
-			row[4] = d.getNationality();
-			row[5] = d.getNumber();
+			row[2] = d.getAge();
+			row[3] = d.getLaps();
+			row[4] = d.getRaces();
+			row[5] = d.getPodiums();
+			row[6] = d.getWins();
+			row[7] = d.getTeam();
+			row[8] = d.getKart();
 			model.addRow(row);
 		});
 	}
@@ -53,10 +56,13 @@ public class DriverPanel extends JPanel{
 		};
 		model.addColumn("ID");
 		model.addColumn("Name");
-		model.addColumn("Last Name");
 		model.addColumn("Age");
-		model.addColumn("Nationality");
-		model.addColumn("Number");
+		model.addColumn("Laps");
+		model.addColumn("Races");
+		model.addColumn("Podiums");
+		model.addColumn("Wins");
+		model.addColumn("Team");
+		model.addColumn("Kart");
 		
 		table = new JTable(model);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);

@@ -15,42 +15,32 @@ public class Driver {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	int driver_id;
-	
 	String name;
-	String last_name;
-	LocalDate birthdate;
+	LocalDate dob;
 	int age;
-	String nationality;
-	int number;
+	int laps;
 	int races;
 	int podiums;
 	int wins;
-	int fast_laps;
-	int poles;
-	int dnf;
-	int points;
-	//int team;
-	//int points;
-	//Blob img;
+	int team;
+	int kart;
 	
 	public Driver() {
 		
 	}
 
-	public Driver(String name, String last_name, LocalDate birthdate, String nationality, int number, int races,
-			int podiums, int wins, int fast_laps, int poles, int dnf, int points) {
+	public Driver(int driver_id, String name, LocalDate dob, int age, int laps, int races, int podiums, int wins,
+			int team, int kart) {
+		this.driver_id = driver_id;
 		this.name = name;
-		this.last_name = last_name;
-		this.birthdate = birthdate;
-		this.nationality = nationality;
-		this.number = number;
+		this.dob = dob;
+		this.age = age;
+		this.laps = laps;
 		this.races = races;
 		this.podiums = podiums;
 		this.wins = wins;
-		this.fast_laps = fast_laps;
-		this.poles = poles;
-		this.dnf = dnf;
-		this.points = points;
+		this.team = team;
+		this.kart = kart;
 	}
 
 	public int getDriver_id() {
@@ -69,36 +59,28 @@ public class Driver {
 		this.name = name;
 	}
 
-	public String getLast_name() {
-		return last_name;
+	public LocalDate getDob() {
+		return dob;
 	}
 
-	public void setLast_name(String last_name) {
-		this.last_name = last_name;
+	public void setDob(LocalDate dob) {
+		this.dob = dob;
 	}
 
-	public LocalDate getBirthdate() {
-		return birthdate;
+	public int getAge() {
+		return age;
 	}
 
-	public void setBirthdate(LocalDate birthdate) {
-		this.birthdate = birthdate;
+	public void setAge(int age) {
+		this.age = age;
 	}
 
-	public String getNationality() {
-		return nationality;
+	public int getLaps() {
+		return laps;
 	}
 
-	public void setNationality(String nationality) {
-		this.nationality = nationality;
-	}
-
-	public int getNumber() {
-		return number;
-	}
-
-	public void setNumber(int number) {
-		this.number = number;
+	public void setLaps(int laps) {
+		this.laps = laps;
 	}
 
 	public int getRaces() {
@@ -125,44 +107,20 @@ public class Driver {
 		this.wins = wins;
 	}
 
-	public int getFast_laps() {
-		return fast_laps;
+	public int getTeam() {
+		return team;
 	}
 
-	public void setFast_laps(int fast_laps) {
-		this.fast_laps = fast_laps;
+	public void setTeam(int team) {
+		this.team = team;
 	}
 
-	public int getPoles() {
-		return poles;
+	public int getKart() {
+		return kart;
 	}
 
-	public void setPoles(int poles) {
-		this.poles = poles;
-	}
-
-	public int getDnf() {
-		return dnf;
-	}
-
-	public void setDnf(int dnf) {
-		this.dnf = dnf;
-	}
-
-	public int getPoints() {
-		return points;
-	}
-
-	public void setPoints(int points) {
-		this.points = points;
-	}
-
-	public int getAge() {
-		return age;
-	}
-
-	public void setAge(int age) {
-		this.age = age;
+	public void setKart(int kart) {
+		this.kart = kart;
 	}
 	
 }
