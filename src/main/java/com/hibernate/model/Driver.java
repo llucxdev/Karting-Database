@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 @Table(name="driver")
 public class Driver {
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private int driver_id;
 	private String name;
 	private LocalDate dob;
@@ -24,14 +24,13 @@ public class Driver {
 	private int wins;
 	private int team;
 	private int kart;
-	private byte[] img;
+	private Blob img;
 	
 	public Driver() {
-		
+		super();
 	}
 
-	public Driver(String name, LocalDate dob, int age, int laps, int races, int podiums, int wins,
-			int team, int kart, byte[] img) {
+	public Driver(String name, LocalDate dob, int age, int laps, int races, int podiums, int wins, Blob img) {
 		this.name = name;
 		this.dob = dob;
 		this.age = age;
@@ -39,8 +38,6 @@ public class Driver {
 		this.races = races;
 		this.podiums = podiums;
 		this.wins = wins;
-		this.team = team;
-		this.kart = kart;
 		this.img = img;
 	}
 
@@ -124,11 +121,11 @@ public class Driver {
 		this.kart = kart;
 	}
 
-	public byte[] getImg() {
+	public Blob getImg() {
 		return img;
 	}
 
-	public void setImg(byte[] img) {
+	public void setImg(Blob img) {
 		this.img = img;
 	}
 	

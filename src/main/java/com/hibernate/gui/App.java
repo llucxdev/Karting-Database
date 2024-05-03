@@ -1,6 +1,7 @@
 package com.hibernate.gui;
 
 import java.awt.EventQueue;
+import java.awt.Image;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -17,24 +18,23 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
-import org.hibernate.Hibernate;
-import org.jdatepicker.JDatePicker;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
 
 import com.hibernate.dao.DriverDAO;
+import com.hibernate.dao.TeamDAO;
 import com.hibernate.model.Driver;
-import com.hibernate.util.HibernateUtil;
+import com.hibernate.model.Team;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JTextField;
-import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
@@ -42,13 +42,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Blob;
-import java.sql.SQLException;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import javax.swing.SwingConstants;
+import java.awt.Font;
 
 class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
 	private String datePattern = "yyyy-MM-dd";
@@ -73,31 +71,34 @@ public class App {
 
 	// swing variables
 	private JFrame frmKartingdatabase;
-	DefaultTableModel driverModel;
-	JTable driversTable;
-	List<Driver> driverList;
-	UtilDateModel modelDatePicker;
-	JDatePickerImpl datePicker;
-	private JTextField textFieldName;
+	private JTextField textFieldDriverName;
 	private JTextField textFieldLaps;
 	private JTextField textFieldRaces;
 	private JTextField textFieldPodiums;
 	private JTextField textFieldWins;
-	private JTextField textFieldImgText;
+	private JTextField textFieldDriverImageText;
+	private JLabel lblImg;
+	
+	//tables variables
+	private DefaultTableModel driverModel;
+	private JTable driversTable;
+	
+	private DefaultTableModel teamModel;
+	private JTable teamTable;
 
-	// driver variables for the buttons
-	Driver driver;
-	int driver_id;
-	String name;
-	LocalDate dob;
-	int age;
-	int laps;
-	int races;
-	int podiums;
-	int wins;
-	int team;
-	int kart;
-	byte[] img;
+	//datePicker variables
+	private UtilDateModel modelDatePicker;
+	private JDatePickerImpl datePicker;
+	
+	// driver variables
+	private Driver driver;
+	private int driver_id;
+	
+	// team variables
+	private Team team;
+	private int team_id;
+	private JTextField textFieldTeamName;
+	private JTextField textFieldTeamImage;
 
 	/**
 	 * Launch the application.
@@ -124,7 +125,7 @@ public class App {
 
 	public void refreshDriverTable() {
 		driverModel.setRowCount(0);
-		driverList = DriverDAO.selectAllDrivers();
+		List<Driver> driverList = DriverDAO.selectAllDrivers();
 		driverList.forEach(d -> {
 			Object[] row = new Object[9];
 			row[0] = d.getDriver_id();
@@ -140,8 +141,27 @@ public class App {
 		});
 	}
 	
-	void displayImage() {
-		
+	public void refreshTeamTable() {
+		driverModel.setRowCount(0);
+		List<Team> teamList = TeamDAO.selectAllTeams();
+		teamList.forEach(t -> {
+			Object[] row = new Object[4];
+			row[0] = t.getTeam_id();
+			row[1] = t.getDate();
+			row[2] = t.getName();
+			List<Driver> driversList = t.getDrivers();
+			//driversList.forEach(d -> d.getName());
+			row[3] = t.getDrivers();
+		});
+	}
+	
+	private int parseTextFieldToInt(JTextField textField) {
+	    String text = textField.getText();
+	    if (!text.isEmpty() && text.matches("\\d+")) {
+	        return Integer.parseInt(text);
+	    } else {
+	        return 0;
+	    }
 	}
 
 	/**
@@ -155,7 +175,7 @@ public class App {
 		frmKartingdatabase.getContentPane().setLayout(null);
 
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
-		tabbedPane.setBounds(12, 12, 1166, 770);
+		tabbedPane.setBounds(12, 12, 1166, 782);
 		frmKartingdatabase.getContentPane().add(tabbedPane);
 
 		JPanel driverPanel = new JPanel();
@@ -181,14 +201,7 @@ public class App {
 		driverModel.addColumn("Wins");
 		driverModel.addColumn("Team");
 		driverModel.addColumn("Kart");
-
-		modelDatePicker = new UtilDateModel();
-		Properties properties = new Properties();
-		properties.put("text.today", "Today");
-		properties.put("text.month", "Month");
-		properties.put("text.year", "Year");
-		JDatePanelImpl datePanel = new JDatePanelImpl(modelDatePicker, properties);
-
+		
 		driversTable = new JTable(driverModel);
 		driversTable.addMouseListener(new MouseAdapter() {
 			@Override
@@ -197,18 +210,95 @@ public class App {
 				TableModel model = driversTable.getModel();
 				driver_id = (int) model.getValueAt(i, 0);
 				Driver driver = DriverDAO.selectDriver(driver_id);
-				textFieldName.setText(driver.getName());
+				textFieldDriverName.setText(driver.getName());
 				modelDatePicker.setValue(Date.from(driver.getDob().atStartOfDay(ZoneId.systemDefault()).toInstant()));
 				textFieldLaps.setText(String.valueOf(driver.getLaps()));
 				textFieldRaces.setText(String.valueOf(driver.getRaces()));
 				textFieldPodiums.setText(String.valueOf(driver.getPodiums()));
 				textFieldWins.setText(String.valueOf(driver.getWins()));
+				Blob img = driver.getImg();
+				if (img != null) {
+					try {
+						byte[] imageBytes = img.getBytes(1, (int) img.length());
+						ImageIcon imageIcon = new ImageIcon(imageBytes);
+						Image image = imageIcon.getImage();
+						image.getScaledInstance(lblImg.getWidth(), lblImg.getHeight(), Image.SCALE_SMOOTH);
+						ImageIcon resizedImage = new ImageIcon(image);
+						lblImg.setIcon(resizedImage);
+					} catch (Exception imgException) {
+						
+					}
+				} else {
+					lblImg.setIcon(null);
+				}
+				
 			}
 		});
 		driversTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		JScrollPane scrollPane = new JScrollPane(driversTable);
-		scrollPane.setBounds(12, 12, 1137, 350);
-		driverPanel.add(scrollPane);
+		
+		JScrollPane scrollPaneDrivers = new JScrollPane(driversTable);
+		scrollPaneDrivers.setBounds(12, 12, 1137, 350);
+		driverPanel.add(scrollPaneDrivers);
+		
+		teamModel = new DefaultTableModel() {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
+		teamModel.addColumn("ID");
+		teamModel.addColumn("Date");
+		teamModel.addColumn("Name");
+		teamModel.addColumn("Drivers");
+		
+		teamTable = new JTable(teamModel);
+		teamTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		
+		
+		JScrollPane scrollPaneTeams = new JScrollPane(teamTable);
+		scrollPaneTeams.setBounds(12, 49, 500, 413);
+		teamPanel.add(scrollPaneTeams);
+		
+		JLabel lblTeam = new JLabel("Teams");
+		lblTeam.setFont(new Font("Dialog", Font.BOLD, 16));
+		lblTeam.setHorizontalAlignment(SwingConstants.CENTER);
+		lblTeam.setBounds(227, 22, 70, 15);
+		teamPanel.add(lblTeam);
+		
+		JLabel lblTeamName = new JLabel("Team name:");
+		lblTeamName.setBounds(12, 498, 101, 15);
+		teamPanel.add(lblTeamName);
+		
+		textFieldTeamName = new JTextField();
+		textFieldTeamName.setBounds(131, 493, 150, 25);
+		teamPanel.add(textFieldTeamName);
+		textFieldTeamName.setColumns(10);
+		
+		JLabel lblImage_1 = new JLabel("Select Image:");
+		lblImage_1.setBounds(12, 545, 101, 14);
+		teamPanel.add(lblImage_1);
+		
+		textFieldTeamImage = new JTextField();
+		textFieldTeamImage.setEditable(false);
+		textFieldTeamImage.setBounds(131, 543, 150, 20);
+		teamPanel.add(textFieldTeamImage);
+		textFieldTeamImage.setColumns(10);
+		
+		JButton btnSelectTeamImage = new JButton("Select Image");
+		btnSelectTeamImage.setBounds(293, 540, 132, 25);
+		teamPanel.add(btnSelectTeamImage);
+		
+		JButton btnAddTeam = new JButton("Add");
+		btnAddTeam.setBounds(31, 589, 82, 25);
+		teamPanel.add(btnAddTeam);
+		
+		JButton btnUpdateTeam = new JButton("Upd");
+		btnUpdateTeam.setBounds(165, 589, 82, 25);
+		teamPanel.add(btnUpdateTeam);
+		
+		JButton btnDeleteTeam = new JButton("Del");
+		btnDeleteTeam.setBounds(293, 589, 82, 25);
+		teamPanel.add(btnDeleteTeam);
 
 		JLabel lblName = new JLabel("Name:");
 		lblName.setBounds(90, 430, 70, 15);
@@ -233,14 +323,22 @@ public class App {
 		JLabel lblWins = new JLabel("Wins:");
 		lblWins.setBounds(90, 618, 70, 15);
 		driverPanel.add(lblWins);
+		
+		modelDatePicker = new UtilDateModel();
+		Properties properties = new Properties();
+		properties.put("text.today", "Today");
+		properties.put("text.month", "Month");
+		properties.put("text.year", "Year");
+		JDatePanelImpl datePanel = new JDatePanelImpl(modelDatePicker, properties);
+		
 		datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
 		datePicker.setBounds(439, 425, 150, 25);
 		driverPanel.add(datePicker);
 
-		textFieldName = new JTextField();
-		textFieldName.setBounds(163, 425, 150, 25);
-		driverPanel.add(textFieldName);
-		textFieldName.setColumns(10);
+		textFieldDriverName = new JTextField();
+		textFieldDriverName.setBounds(163, 425, 150, 25);
+		driverPanel.add(textFieldDriverName);
+		textFieldDriverName.setColumns(10);
 
 		textFieldLaps = new JTextField();
 		textFieldLaps.setColumns(10);
@@ -262,103 +360,99 @@ public class App {
 		textFieldWins.setBounds(163, 616, 150, 25);
 		driverPanel.add(textFieldWins);
 
-		JButton btnAdd = new JButton("Add");
-		btnAdd.addActionListener(new ActionListener() {
+		JButton btnAddDriver = new JButton("Add");
+		btnAddDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					name = textFieldName.getText();
+					String name = textFieldDriverName.getText();
 					if (name.isEmpty()) {
 						throw new IllegalArgumentException("Name cannot be empty");
 					}
-
-					Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-					dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-					LocalDate today = LocalDate.now();
-					int age = Period.between(dob, today).getYears();
-					// verificar si los datos opcionales se han rellenado o no
-					if (!textFieldLaps.getText().isEmpty()) {
-						laps = Integer.parseInt(textFieldLaps.getText());
+					
+					LocalDate dob = null;
+					int age = 0;
+					if ((java.util.Date) datePicker.getModel().getValue() != null) {
+						Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+						dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+						LocalDate today = LocalDate.now();
+						age = Period.between(dob, today).getYears();
+					} else {
+						throw new IllegalArgumentException("Birth cannot be empty");
 					}
-					if (!textFieldRaces.getText().isEmpty()) {
-						races = Integer.parseInt(textFieldRaces.getText());
-					}
-					if (!textFieldPodiums.getText().isEmpty()) {
-						podiums = Integer.parseInt(textFieldPodiums.getText());
-					}
-					if (!textFieldWins.getText().isEmpty()) {
-						wins = Integer.parseInt(textFieldWins.getText());
-					}
-
-					try {
-						String imagePath = textFieldImgText.getText();
-						FileInputStream fis = null;
-						img = null;
-						if (!imagePath.isEmpty()) {
-							File imageFile = new File(imagePath);
-							fis = new FileInputStream(imageFile);
-							img = new byte[(int) imageFile.length()];
-							fis.read(img);
+					int laps = parseTextFieldToInt(textFieldLaps);
+					int races = parseTextFieldToInt(textFieldRaces);
+					int podiums = parseTextFieldToInt(textFieldPodiums);
+					int wins = parseTextFieldToInt(textFieldWins);
+					Blob img = null;
+					if (!textFieldDriverImageText.getText().isEmpty()) {
+						try {
+							String imagePath = textFieldDriverImageText.getText();
+					        byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+					        img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
+						} catch (Exception imgException) {
+							
 						}
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
 					}
-
-					// without team and kart
-					driver = new Driver(name, dob, age, laps, races, podiums, wins, team, kart, img);
+					driver = new Driver(name, dob, age, laps, races, podiums, wins, img);
 					DriverDAO.insertDriver(driver);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver inserted successfully");
 					refreshDriverTable();
 				} catch (IllegalArgumentException iae) {
 					JOptionPane.showMessageDialog(null, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
-		btnAdd.setBounds(202, 706, 117, 25);
-		driverPanel.add(btnAdd);
+		btnAddDriver.setBounds(202, 706, 117, 25);
+		driverPanel.add(btnAddDriver);
 
-		JButton btnUpdate = new JButton("Update");
-		btnUpdate.addActionListener(new ActionListener() {
+		JButton btnUpdateDriver = new JButton("Update");
+		btnUpdateDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				driver = DriverDAO.selectDriver(driver_id);
-				name = textFieldName.getText();
+				String name = textFieldDriverName.getText();
 				if (name.isEmpty()) {
 					throw new IllegalArgumentException("Name cannot be empty");
 				}
 				Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-				dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+				LocalDate dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 				LocalDate today = LocalDate.now();
 				int age = Period.between(dob, today).getYears();
-				if (!textFieldLaps.getText().isEmpty()) {
-					laps = Integer.parseInt(textFieldLaps.getText());
-				}
-				if (!textFieldRaces.getText().isEmpty()) {
-					races = Integer.parseInt(textFieldRaces.getText());
-				}
-				if (!textFieldPodiums.getText().isEmpty()) {
-					podiums = Integer.parseInt(textFieldPodiums.getText());
-				}
-				if (!textFieldWins.getText().isEmpty()) {
-					wins = Integer.parseInt(textFieldWins.getText());
+				
+				int laps = parseTextFieldToInt(textFieldLaps);
+				int races = parseTextFieldToInt(textFieldRaces);
+				int podiums = parseTextFieldToInt(textFieldPodiums);
+				int wins = parseTextFieldToInt(textFieldWins);
+				int team = 0;
+				int kart = 0;
+				Blob img = null;
+				if (!textFieldDriverImageText.getText().isEmpty()) {
+					try {
+						String imagePath = textFieldDriverImageText.getText();
+				        byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+				        img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
+					} catch (Exception imgException) {
+						
+					}
 				}
 				// without team and kart
-				DriverDAO.updateDriver(driver, name, dob, age, laps, races, podiums, wins, team, kart);
+				DriverDAO.updateDriver(driver, name, dob, age, laps, races, podiums, wins, team, kart, img);
 				refreshDriverTable();
 			}
 		});
-		btnUpdate.setBounds(521, 706, 117, 25);
-		driverPanel.add(btnUpdate);
+		btnUpdateDriver.setBounds(521, 706, 117, 25);
+		driverPanel.add(btnUpdateDriver);
 
-		JButton btnDelete = new JButton("Delete");
-		btnDelete.addActionListener(new ActionListener() {
+		JButton btnDeleteDriver = new JButton("Delete");
+		btnDeleteDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				DriverDAO.deleteDriver(driver_id);
 				refreshDriverTable();
 			}
 		});
-		btnDelete.setBounds(840, 706, 117, 25);
-		driverPanel.add(btnDelete);
+		btnDeleteDriver.setBounds(840, 706, 117, 25);
+		driverPanel.add(btnDeleteDriver);
 
-		JLabel lblImg = new JLabel();
+		lblImg = new JLabel();
 		lblImg.setBounds(748, 384, 300, 300);
 		driverPanel.add(lblImg);
 
@@ -366,26 +460,26 @@ public class App {
 		lblImage.setBounds(348, 478, 92, 14);
 		driverPanel.add(lblImage);
 
-		JButton btnSelectImage = new JButton("Select Image");
-		btnSelectImage.addActionListener(new ActionListener() {
+		JButton btnSelectDriverImage = new JButton("Select Image");
+		btnSelectDriverImage.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser chooser = new JFileChooser();
 				chooser.showOpenDialog(null);
 				if (chooser.getSelectedFile() != null) {
 					File f = chooser.getSelectedFile();
 					String fileName = f.getAbsolutePath();
-					textFieldImgText.setText(fileName);
+					textFieldDriverImageText.setText(fileName);
 				}
 			}
 		});
-		btnSelectImage.setBounds(609, 470, 117, 25);
-		driverPanel.add(btnSelectImage);
+		btnSelectDriverImage.setBounds(609, 470, 132, 25);
+		driverPanel.add(btnSelectDriverImage);
 
-		textFieldImgText = new JTextField();
-		textFieldImgText.setEditable(false);
-		textFieldImgText.setBounds(439, 472, 150, 20);
-		driverPanel.add(textFieldImgText);
-		textFieldImgText.setColumns(10);
+		textFieldDriverImageText = new JTextField();
+		textFieldDriverImageText.setEditable(false);
+		textFieldDriverImageText.setBounds(439, 472, 150, 20);
+		driverPanel.add(textFieldDriverImageText);
+		textFieldDriverImageText.setColumns(10);
 
 		refreshDriverTable();
 	}
