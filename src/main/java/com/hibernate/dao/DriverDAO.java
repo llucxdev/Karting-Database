@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
 import com.hibernate.model.Driver;
 import com.hibernate.util.HibernateUtil;
@@ -26,7 +27,24 @@ public class DriverDAO {
 		}
 		return driver;
 	}
-	
+
+	public static Driver selectDriver(String name) {
+		Transaction transaction = null;
+		Driver driver = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			Query<Driver> query = session.createQuery("FROM Driver WHERE name = :name", Driver.class);
+			query.setParameter("name", name);
+			driver = query.uniqueResult();
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+		return driver;
+	}
+
 	public static List<Driver> selectAllDrivers() {
 		Transaction transaction = null;
 		List<Driver> driverList = null;
@@ -41,7 +59,7 @@ public class DriverDAO {
 		}
 		return driverList;
 	}
-	
+
 	public static void insertDriver(Driver driver) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -54,9 +72,9 @@ public class DriverDAO {
 			}
 		}
 	}
-	
-	public static void updateDriver(Driver driver, String name, LocalDate dob, int age, int laps, int races, int podiums, int wins,
-			int team, int kart, Blob img) {
+
+	public static void updateDriver(Driver driver, String name, LocalDate dob, int age, int laps, int races,
+			int podiums, int wins, int team, int kart, Blob img) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
@@ -78,7 +96,7 @@ public class DriverDAO {
 			}
 		}
 	}
-	
+
 	public static void deleteDriver(int id) {
 		Transaction transaction = null;
 		Driver driver = null;

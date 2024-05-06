@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
 import com.hibernate.model.Team;
 import com.hibernate.util.HibernateUtil;
@@ -27,12 +28,29 @@ public class TeamDAO {
 		return team;
 	}
 	
+	public static Team selectTeam(String name) {
+		Transaction transaction = null;
+		Team team = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			Query<Team> query = session.createQuery("FROM Team WHERE name = :name", Team.class);
+			query.setParameter("name", name);
+			team = query.uniqueResult();
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+		return team;
+	}
+	
 	public static List<Team> selectAllTeams() {
 		Transaction transaction = null;
 		List<Team> teamList = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			teamList = session.createQuery("FROM team", Team.class).getResultList();
+			teamList = session.createQuery("FROM Team", Team.class).getResultList();
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {

@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name="team")
@@ -20,14 +21,14 @@ public class Team {
 	private String name;
 	private LocalDate date;
 	private Blob img;
+	@Transient
 	private List<Driver> drivers;
 	
 	public Team() {
 		super();
 	}
 
-	public Team(int team_id, String name, LocalDate date, Blob img) {
-		this.team_id = team_id;
+	public Team(String name, LocalDate date, Blob img) {
 		this.name = name;
 		this.date = date;
 		this.img = img;
@@ -72,4 +73,5 @@ public class Team {
 	public void setDrivers(List<Driver> drivers) {
 		this.drivers = drivers;
 	}
+	
 }
