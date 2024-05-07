@@ -620,14 +620,27 @@ public class App {
 		comboBoxAddTeam = new JComboBox();
 		comboBoxAddTeam.setBounds(640, 579, 144, 25);
 		teamPanel.add(comboBoxAddTeam);
-
-		comboBoxRemoveDriver = new JComboBox();
-		comboBoxRemoveDriver.setBounds(866, 530, 144, 25);
-		teamPanel.add(comboBoxRemoveDriver);
-
+		
 		lblRemoveTeam = new JLabel();
 		lblRemoveTeam.setBounds(866, 579, 144, 25);
 		teamPanel.add(lblRemoveTeam);
+
+		comboBoxRemoveDriver = new JComboBox();
+		comboBoxRemoveDriver.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (comboBoxRemoveDriver.getSelectedItem() != null) {
+					String driverName = (String) comboBoxRemoveDriver.getSelectedItem();
+					Driver driver = DriverDAO.selectDriver(driverName);
+					Team team = TeamDAO.selectTeam(driver.getTeam());
+					lblRemoveTeam.setText(team.getName());
+				} else {
+					lblRemoveTeam.setText(null);
+				}
+				
+			}
+		});
+		comboBoxRemoveDriver.setBounds(866, 530, 144, 25);
+		teamPanel.add(comboBoxRemoveDriver);
 
 		JButton btnAddDriverToTeam = new JButton("Add");
 		btnAddDriverToTeam.addActionListener(new ActionListener() {
