@@ -91,11 +91,11 @@ public class App {
 	private DefaultTableModel teamModel;
 	private JTable teamTable;
 	
-	// comboBox
+	// comboBox and removeTeam label
 	private JComboBox comboBoxAddDriver;
 	private JComboBox comboBoxAddTeam;
 	private JComboBox comboBoxRemoveDriver;
-	private JComboBox comboBoxRemoveTeam;
+	private JLabel lblRemoveTeam;
 
 	// datePicker variables
 	private UtilDateModel modelDatePicker;
@@ -160,20 +160,39 @@ public class App {
 				row[0] = t.getTeam_id();
 				row[1] = t.getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 				row[2] = t.getName();
-				/*
 				List<Driver> driversList = t.getDrivers();
-				driversList.forEach(d -> {
-					String driversName = "";
-					driversName += d.getName() + ", ";
-				});
-				row[3] = driversName;
-				*/
+				if (!driversList.isEmpty()) {
+					StringBuilder driversNames = new StringBuilder();
+					for (Driver d : driversList) {
+						driversNames.append(d.getName() + ", ");
+					}
+					driversNames.delete(driversNames.length()-2, driversNames.length()-1);
+					row[3] = driversNames;
+				}
+				row[3] = null;
 				teamModel.addRow(row);
 			});
 	}
 	
 	public void refreshComboBox() {
-		
+		comboBoxAddDriver.removeAllItems();
+		comboBoxAddTeam.removeAllItems();
+		comboBoxRemoveDriver.removeAllItems();
+		List<Driver> driverAddList = DriverDAO.selectDriversWithoutTeam();
+		List<Driver> driverRemoveList = DriverDAO.selectDriversWithTeam();
+		List<Team> teamAddList = TeamDAO.selectAllTeams();
+		if (driverAddList != null)
+			driverAddList.forEach(d -> {
+				comboBoxAddDriver.addItem(d.getName());
+			});
+		if (teamAddList != null)
+			teamAddList.forEach(t -> {
+				comboBoxAddTeam.addItem(t.getName());
+			});
+		if (driverRemoveList != null)
+			driverRemoveList.forEach(d -> {
+				comboBoxRemoveDriver.addItem(d.getName());
+			});
 	}
 
 	private int parseTextFieldToInt(JTextField textField) {
@@ -421,6 +440,7 @@ public class App {
 					DriverDAO.insertDriver(driver);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver inserted successfully");
 					refreshDriverTable();
+					refreshComboBox();
 				} catch (IllegalArgumentException iae) {
 					JOptionPane.showMessageDialog(null, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
@@ -462,6 +482,7 @@ public class App {
 				DriverDAO.updateDriver(driver, name, dob, age, laps, races, podiums, wins, team, kart, img);
 				JOptionPane.showMessageDialog(frmKartingdatabase, "Driver updated successfully");
 				refreshDriverTable();
+				refreshComboBox();
 			}
 		});
 		btnUpdateDriver.setBounds(521, 706, 117, 25);
@@ -474,6 +495,7 @@ public class App {
 				lblDriverImg.setIcon(null);
 				JOptionPane.showMessageDialog(frmKartingdatabase, "Driver deleted successfully");
 				refreshDriverTable();
+				refreshComboBox();
 			}
 		});
 		btnDeleteDriver.setBounds(840, 706, 117, 25);
@@ -552,6 +574,7 @@ public class App {
 					TeamDAO.insertTeam(team);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Team inserted successfully");
 					refreshTeamTable();
+					refreshComboBox();
 				} catch (IllegalArgumentException iae) {
 					JOptionPane.showMessageDialog(null, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
@@ -567,10 +590,11 @@ public class App {
 		JButton btnDeleteTeam = new JButton("Del");
 		btnDeleteTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				TeamDAO.deleteteam(team_id);
+				TeamDAO.deleteTeam(team_id);
 				lblTeamImg.setIcon(null);
 				JOptionPane.showMessageDialog(frmKartingdatabase, "Team deleted successfully");
 				refreshTeamTable();
+				refreshComboBox();
 			}
 		});
 		btnDeleteTeam.setBounds(293, 579, 82, 25);
@@ -604,19 +628,45 @@ public class App {
 		comboBoxRemoveDriver.setBounds(866, 530, 144, 25);
 		teamPanel.add(comboBoxRemoveDriver);
 		
-		comboBoxRemoveTeam = new JComboBox();
-		comboBoxRemoveTeam.setBounds(866, 579, 144, 25);
-		teamPanel.add(comboBoxRemoveTeam);
+		lblRemoveTeam = new JLabel();
+		lblRemoveTeam.setBounds(866, 579, 144, 25);
+		teamPanel.add(lblRemoveTeam);
 		
 		JButton btnAddDriverToTeam = new JButton("Add");
+		btnAddDriverToTeam.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				String driverName = (String) comboBoxAddDriver.getSelectedItem();
+				Driver driver = DriverDAO.selectDriver(driverName);
+				String teamName = (String) comboBoxAddTeam.getSelectedItem();
+				Team team = TeamDAO.selectTeam(teamName);
+				DriverDAO.updateDriver(driver, team.getTeam_id());
+				team.getDrivers().add(driver);
+				refreshComboBox();
+				refreshTeamTable();
+				refreshDriverTable();
+			}
+		});
 		btnAddDriverToTeam.setBounds(665, 631, 90, 25);
 		teamPanel.add(btnAddDriverToTeam);
 		
-		JButton btnRemove = new JButton("Remove");
-		btnRemove.setBounds(891, 631, 90, 25);
-		teamPanel.add(btnRemove);
+		JButton btnRemoveDriverFromTeam = new JButton("Remove");
+		btnRemoveDriverFromTeam.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				String driverName = (String) comboBoxRemoveDriver.getSelectedItem();
+				Driver driver = DriverDAO.selectDriver(driverName);
+				Team team = TeamDAO.selectTeam(driver.getTeam());
+				DriverDAO.updateDriver(driver, 0);
+				team.getDrivers().remove(driver);
+				refreshComboBox();
+				refreshTeamTable();
+				refreshDriverTable();
+			}
+		});
+		btnRemoveDriverFromTeam.setBounds(891, 631, 90, 25);
+		teamPanel.add(btnRemoveDriverFromTeam);
 
 		refreshDriverTable();
 		refreshTeamTable();
+		refreshComboBox();
 	}
 }

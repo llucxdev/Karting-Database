@@ -1,16 +1,18 @@
 package com.hibernate.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import java.sql.Blob;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name="team")
@@ -21,7 +23,8 @@ public class Team {
 	private String name;
 	private LocalDate date;
 	private Blob img;
-	@Transient
+	
+	@OneToMany(fetch = FetchType.EAGER)
 	private List<Driver> drivers;
 	
 	public Team() {
@@ -73,5 +76,4 @@ public class Team {
 	public void setDrivers(List<Driver> drivers) {
 		this.drivers = drivers;
 	}
-	
 }

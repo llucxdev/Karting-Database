@@ -2,12 +2,14 @@ package com.hibernate.dao;
 
 import java.sql.Blob;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
+import com.hibernate.model.Driver;
 import com.hibernate.model.Team;
 import com.hibernate.util.HibernateUtil;
 
@@ -60,6 +62,26 @@ public class TeamDAO {
 		return teamList;
 	}
 	
+	public static List<Team> selectTeamsWithDrivers() {
+		Transaction transaction = null;
+		List<Driver> driverList = null;
+		List<Team> teamList = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			driverList = DriverDAO.selectDriversWithTeam();
+			driverList.forEach(d -> {
+				int teamId = d.getTeam();
+				teamList.add(TeamDAO.selectTeam(teamId));
+			});
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+		return teamList;
+	}
+	
 	public static void insertTeam(Team team) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -73,7 +95,7 @@ public class TeamDAO {
 		}
 	}
 	
-	public static void updateteam(Team team, String name, LocalDate date, Blob img) {
+	public static void updateTeam(Team team, String name, LocalDate date, Blob img) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
@@ -89,7 +111,7 @@ public class TeamDAO {
 		}
 	}
 	
-	public static void deleteteam(int id) {
+	public static void deleteTeam(int id) {
 		Transaction transaction = null;
 		Team team = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {

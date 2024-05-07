@@ -59,6 +59,36 @@ public class DriverDAO {
 		}
 		return driverList;
 	}
+	
+	public static List<Driver> selectDriversWithoutTeam() {
+		Transaction transaction = null;
+		List<Driver> driverList = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			driverList = session.createQuery("FROM Driver WHERE team = 0", Driver.class).getResultList();
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+		return driverList;
+	}
+	
+	public static List<Driver> selectDriversWithTeam() {
+		Transaction transaction = null;
+		List<Driver> driverList = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			driverList = session.createQuery("FROM Driver WHERE team != 0", Driver.class).getResultList();
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+		return driverList;
+	}
 
 	public static void insertDriver(Driver driver) {
 		Transaction transaction = null;
@@ -88,6 +118,20 @@ public class DriverDAO {
 			driver.setTeam(team);
 			driver.setKart(kart);
 			driver.setImg(img);
+			session.merge(driver);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
+	
+	public static void updateDriver(Driver driver, int team) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			driver.setTeam(team);
 			session.merge(driver);
 			transaction.commit();
 		} catch (Exception e) {
