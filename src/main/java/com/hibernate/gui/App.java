@@ -46,8 +46,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Blob;
-import javax.swing.SwingConstants;
-import java.awt.Font;
 import javax.swing.JComboBox;
 
 class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
@@ -90,7 +88,7 @@ public class App {
 
 	private DefaultTableModel teamModel;
 	private JTable teamTable;
-	
+
 	// comboBox and removeTeam label
 	private JComboBox comboBoxAddDriver;
 	private JComboBox comboBoxAddTeam;
@@ -161,19 +159,18 @@ public class App {
 				row[1] = t.getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 				row[2] = t.getName();
 				List<Driver> driversList = t.getDrivers();
-				if (!driversList.isEmpty()) {
-					StringBuilder driversNames = new StringBuilder();
-					for (Driver d : driversList) {
-						driversNames.append(d.getName() + ", ");
-					}
-					driversNames.delete(driversNames.length()-2, driversNames.length()-1);
-					row[3] = driversNames;
+				StringBuilder driversNames = new StringBuilder();
+				for (Driver d : driversList) {
+					driversNames.append(d.getName() + ", ");
 				}
-				row[3] = null;
+				if (driversNames.length() >= 2) {
+					driversNames.delete(driversNames.length() - 2, driversNames.length() - 1);
+				}
+				row[3] = driversNames;
 				teamModel.addRow(row);
 			});
 	}
-	
+
 	public void refreshComboBox() {
 		comboBoxAddDriver.removeAllItems();
 		comboBoxAddTeam.removeAllItems();
@@ -512,7 +509,7 @@ public class App {
 		JLabel lblImage = new JLabel("Select Image:");
 		lblImage.setBounds(348, 478, 92, 14);
 		driverPanel.add(lblImage);
-		
+
 		textFieldDriverImageText = new JTextField();
 		textFieldDriverImageText.setEditable(false);
 		textFieldDriverImageText.setBounds(439, 472, 150, 20);
@@ -599,39 +596,39 @@ public class App {
 		});
 		btnDeleteTeam.setBounds(293, 579, 82, 25);
 		teamPanel.add(btnDeleteTeam);
-		
+
 		JLabel lblAddDriverToTeam = new JLabel("Add driver to team");
 		lblAddDriverToTeam.setBounds(542, 498, 144, 15);
 		teamPanel.add(lblAddDriverToTeam);
-		
+
 		JLabel lblRemoveDriverFrom = new JLabel("Remove driver from team");
 		lblRemoveDriverFrom.setBounds(806, 498, 183, 15);
 		teamPanel.add(lblRemoveDriverFrom);
-		
+
 		JLabel lblNewLabel = new JLabel("Driver");
 		lblNewLabel.setBounds(552, 535, 70, 15);
 		teamPanel.add(lblNewLabel);
-		
+
 		JLabel lblTeam = new JLabel("Team");
 		lblTeam.setBounds(552, 584, 70, 15);
 		teamPanel.add(lblTeam);
-		
+
 		comboBoxAddDriver = new JComboBox();
 		comboBoxAddDriver.setBounds(640, 530, 144, 25);
 		teamPanel.add(comboBoxAddDriver);
-		
+
 		comboBoxAddTeam = new JComboBox();
 		comboBoxAddTeam.setBounds(640, 579, 144, 25);
-		teamPanel.add(comboBoxAddTeam);		
-		
+		teamPanel.add(comboBoxAddTeam);
+
 		comboBoxRemoveDriver = new JComboBox();
 		comboBoxRemoveDriver.setBounds(866, 530, 144, 25);
 		teamPanel.add(comboBoxRemoveDriver);
-		
+
 		lblRemoveTeam = new JLabel();
 		lblRemoveTeam.setBounds(866, 579, 144, 25);
 		teamPanel.add(lblRemoveTeam);
-		
+
 		JButton btnAddDriverToTeam = new JButton("Add");
 		btnAddDriverToTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -640,7 +637,7 @@ public class App {
 				String teamName = (String) comboBoxAddTeam.getSelectedItem();
 				Team team = TeamDAO.selectTeam(teamName);
 				DriverDAO.updateDriver(driver, team.getTeam_id());
-				team.getDrivers().add(driver);
+				TeamDAO.updateTeamAddDriver(team, driver);
 				refreshComboBox();
 				refreshTeamTable();
 				refreshDriverTable();
@@ -648,7 +645,7 @@ public class App {
 		});
 		btnAddDriverToTeam.setBounds(665, 631, 90, 25);
 		teamPanel.add(btnAddDriverToTeam);
-		
+
 		JButton btnRemoveDriverFromTeam = new JButton("Remove");
 		btnRemoveDriverFromTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -656,7 +653,7 @@ public class App {
 				Driver driver = DriverDAO.selectDriver(driverName);
 				Team team = TeamDAO.selectTeam(driver.getTeam());
 				DriverDAO.updateDriver(driver, 0);
-				team.getDrivers().remove(driver);
+				TeamDAO.updateTeamRemoveDriver(team, driver.getDriver_id());
 				refreshComboBox();
 				refreshTeamTable();
 				refreshDriverTable();

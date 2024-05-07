@@ -2,7 +2,6 @@ package com.hibernate.dao;
 
 import java.sql.Blob;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Session;
@@ -29,7 +28,7 @@ public class TeamDAO {
 		}
 		return team;
 	}
-	
+
 	public static Team selectTeam(String name) {
 		Transaction transaction = null;
 		Team team = null;
@@ -46,7 +45,7 @@ public class TeamDAO {
 		}
 		return team;
 	}
-	
+
 	public static List<Team> selectAllTeams() {
 		Transaction transaction = null;
 		List<Team> teamList = null;
@@ -61,27 +60,7 @@ public class TeamDAO {
 		}
 		return teamList;
 	}
-	
-	public static List<Team> selectTeamsWithDrivers() {
-		Transaction transaction = null;
-		List<Driver> driverList = null;
-		List<Team> teamList = null;
-		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			transaction = session.beginTransaction();
-			driverList = DriverDAO.selectDriversWithTeam();
-			driverList.forEach(d -> {
-				int teamId = d.getTeam();
-				teamList.add(TeamDAO.selectTeam(teamId));
-			});
-			transaction.commit();
-		} catch (Exception e) {
-			if (transaction != null) {
-				transaction.rollback();
-			}
-		}
-		return teamList;
-	}
-	
+
 	public static void insertTeam(Team team) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -94,7 +73,7 @@ public class TeamDAO {
 			}
 		}
 	}
-	
+
 	public static void updateTeam(Team team, String name, LocalDate date, Blob img) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -110,7 +89,44 @@ public class TeamDAO {
 			}
 		}
 	}
-	
+
+	public static void updateTeamAddDriver(Team team, Driver driver) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			team.addDriver(driver);
+			session.merge(team);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
+
+	public static void updateTeamRemoveDriver(Team team, int id) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			List<Driver> driversList = team.getDrivers();
+			if (driversList.size()==1) {
+				driversList.clear();
+			} else {
+				for (Driver d : driversList) {
+					if (d.getDriver_id() == id) {
+						team.removeDriver(d);
+					}
+				}
+			}
+			session.merge(team);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
+
 	public static void deleteTeam(int id) {
 		Transaction transaction = null;
 		Team team = null;

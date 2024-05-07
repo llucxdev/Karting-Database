@@ -1,7 +1,6 @@
 package com.hibernate.model;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import java.sql.Blob;
@@ -75,5 +74,13 @@ public class Team {
 
 	public void setDrivers(List<Driver> drivers) {
 		this.drivers = drivers;
+	}
+	
+	public void addDriver(Driver driver) {
+		this.drivers.add(driver);
+	}
+	
+	public void removeDriver(Driver driver) {
+		this.drivers.remove(driver);
 	}
 }
