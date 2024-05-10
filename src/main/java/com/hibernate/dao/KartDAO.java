@@ -1,99 +1,80 @@
 package com.hibernate.dao;
 
-import java.sql.Blob;
 import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.query.Query;
 
-import com.hibernate.model.Driver;
-import com.hibernate.model.Team;
+import com.hibernate.model.Kart;
 import com.hibernate.util.HibernateUtil;
 
-public class TeamDAO {
-
-	public static Team selectTeam(int id) {
+public class KartDAO {
+	
+	public static Kart selectKart(int id) {
 		Transaction transaction = null;
-		Team team = null;
+		Kart kart = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			team = session.get(Team.class, id);
+			kart = session.get(Kart.class, id);
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {
 				transaction.rollback();
 			}
 		}
-		return team;
+		return kart;
 	}
-
-	public static Team selectTeam(String name) {
+	
+	public static List<Kart> selectAllKarts() {
 		Transaction transaction = null;
-		Team team = null;
+		List<Kart> kartList = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			Query<Team> query = session.createQuery("FROM Team WHERE name = :name", Team.class);
-			query.setParameter("name", name);
-			team = query.uniqueResult();
+			kartList = session.createQuery("FROM Kart", Kart.class).getResultList();
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {
 				transaction.rollback();
 			}
 		}
-		return team;
+		return kartList;
 	}
-
-	public static List<Team> selectAllTeams() {
+	
+	public static List<Kart> selectAvailableKarts() {
 		Transaction transaction = null;
-		List<Team> teamList = null;
+		List<Kart> kartList = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			teamList = session.createQuery("FROM Team", Team.class).getResultList();
+			kartList = session.createQuery("FROM Kart WHERE available = true", Kart.class).getResultList();
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {
 				transaction.rollback();
 			}
 		}
-		return teamList;
+		return kartList;
 	}
-
-	public static void insertTeam(Team team) {
+	
+	public static List<Kart> selectUnavailableKarts() {
 		Transaction transaction = null;
+		List<Kart> kartList = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			session.persist(team);
+			kartList = session.createQuery("FROM Kart WHERE available = false", Kart.class).getResultList();
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {
 				transaction.rollback();
 			}
 		}
+		return kartList;
 	}
-
-	public static void updateTeam(Team team, String name, Blob img) {
+	
+	public static void insertKart(Kart kart) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			team.setName(name);
-			team.setImg(img);
-			session.merge(team);
-			transaction.commit();
-		} catch (Exception e) {
-			if (transaction != null) {
-				transaction.rollback();
-			}
-		}
-	}
-
-	public static void updateTeamAddDriver(Team team, Driver driver) {
-		Transaction transaction = null;
-		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			transaction = session.beginTransaction();
-			team.addDriver(driver);
-			session.merge(team);
+			session.persist(kart);
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {
@@ -101,22 +82,13 @@ public class TeamDAO {
 			}
 		}
 	}
-
-	public static void updateTeamRemoveDriver(Team team, int id) {
+	
+	public static void updateKart(Kart kart, boolean available) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			List<Driver> driversList = team.getDrivers();
-			if (driversList.size()==1) {
-				driversList.clear();
-			} else {
-				for (Driver d : driversList) {
-					if (d.getDriver_id() == id) {
-						team.removeDriver(d);
-					}
-				}
-			}
-			session.merge(team);
+			kart.setAvailable(available);
+			session.merge(kart);
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {
@@ -124,14 +96,14 @@ public class TeamDAO {
 			}
 		}
 	}
-
-	public static void deleteTeam(int id) {
+	
+	public static void deleteKart(int id) {
 		Transaction transaction = null;
-		Team team = null;
+		Kart kart = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			team = session.get(Team.class, id);
-			session.remove(team);
+			kart = session.get(Kart.class, id);
+			session.remove(kart);
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {

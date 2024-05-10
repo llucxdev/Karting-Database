@@ -9,6 +9,7 @@ import org.hibernate.cfg.Environment;
 import org.hibernate.service.ServiceRegistry;
 
 import com.hibernate.model.Driver;
+import com.hibernate.model.Kart;
 import com.hibernate.model.Team;
 
 public class HibernateUtil {
@@ -32,6 +33,7 @@ public class HibernateUtil {
 				configuration.setProperties(settings);
 				configuration.addAnnotatedClass(Driver.class);
 				configuration.addAnnotatedClass(Team.class);
+				configuration.addAnnotatedClass(Kart.class);
 				
 				ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
 				

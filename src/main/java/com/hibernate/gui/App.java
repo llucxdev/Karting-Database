@@ -24,8 +24,10 @@ import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
 
 import com.hibernate.dao.DriverDAO;
+import com.hibernate.dao.KartDAO;
 import com.hibernate.dao.TeamDAO;
 import com.hibernate.model.Driver;
+import com.hibernate.model.Kart;
 import com.hibernate.model.Team;
 
 import javax.swing.JPanel;
@@ -89,11 +91,19 @@ public class App {
 	private DefaultTableModel teamModel;
 	private JTable teamTable;
 
+	private DefaultTableModel kartModel;
+	private JTable kartTable;
+
 	// comboBox and removeTeam label
 	private JComboBox comboBoxAddDriver;
 	private JComboBox comboBoxAddTeam;
 	private JComboBox comboBoxRemoveDriver;
 	private JLabel lblRemoveTeam;
+
+	// comboBox assign karts
+	private JComboBox comboBoxAssignDriver;
+	private JComboBox comboBoxAssignKart;
+	private JComboBox comboBoxUnassignDriver;
 
 	// datePicker variables
 	private UtilDateModel modelDatePicker;
@@ -101,11 +111,18 @@ public class App {
 
 	// driver variables
 	private Driver driver;
-	private int driver_id;
+	private int driver_id = 0;
 
 	// team variables
 	private Team team;
-	private int team_id;
+	private int team_id = 0;
+
+	// kart variables
+	private Kart kart;
+	private int kart_id = 0;
+	
+	// lap variables
+	
 
 	/**
 	 * Launch the application.
@@ -171,7 +188,7 @@ public class App {
 			});
 	}
 
-	public void refreshComboBox() {
+	public void refreshComboBoxTeams() {
 		comboBoxAddDriver.removeAllItems();
 		comboBoxAddTeam.removeAllItems();
 		comboBoxRemoveDriver.removeAllItems();
@@ -190,6 +207,47 @@ public class App {
 			driverRemoveList.forEach(d -> {
 				comboBoxRemoveDriver.addItem(d.getName());
 			});
+	}
+
+	public void refreshKartTable() {
+		kartModel.setRowCount(0);
+		List<Kart> kartList = KartDAO.selectAllKarts();
+		if (kartList != null)
+			kartList.forEach(k -> {
+				Object[] row = new Object[2];
+				row[0] = k.getKart_id();
+				row[1] = k.isAvailable();
+				kartModel.addRow(row);
+			});
+	}
+
+	public void refreshComboBoxKarts() {
+		comboBoxAssignKart.removeAllItems();
+		comboBoxAssignDriver.removeAllItems();
+		comboBoxUnassignDriver.removeAllItems();
+		List<Driver> driverAddList = DriverDAO.selectDriversWithoutKart();
+		List<Driver> driverRemoveList = DriverDAO.selectDriversWithKart();
+		List<Kart> kartList = KartDAO.selectAvailableKarts();
+		if (driverAddList != null)
+			driverAddList.forEach(d -> {
+				comboBoxAssignDriver.addItem(d.getName());
+			});
+		if (kartList != null)
+			kartList.forEach(t -> {
+				comboBoxAssignKart.addItem(t.getKart_id());
+			});
+		if (driverRemoveList != null)
+			driverRemoveList.forEach(d -> {
+				comboBoxUnassignDriver.addItem(d.getName());
+			});
+	}
+
+	public void refreshAll() {
+		refreshDriverTable();
+		refreshTeamTable();
+		refreshComboBoxTeams();
+		refreshKartTable();
+		refreshComboBoxKarts();
 	}
 
 	private int parseTextFieldToInt(JTextField textField) {
@@ -211,6 +269,7 @@ public class App {
 		frmKartingdatabase.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmKartingdatabase.getContentPane().setLayout(null);
 
+		// tabbed pane with different panels
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setBounds(12, 12, 1166, 782);
 		frmKartingdatabase.getContentPane().add(tabbedPane);
@@ -223,6 +282,15 @@ public class App {
 		tabbedPane.addTab("Teams", null, teamPanel, null);
 		teamPanel.setLayout(null);
 
+		JPanel kartPanel = new JPanel();
+		tabbedPane.addTab("Karts", null, kartPanel, null);
+		
+		JPanel LapsPanel = new JPanel();
+		tabbedPane.addTab("Laps", null, LapsPanel, null);
+		LapsPanel.setLayout(null);
+
+		// table models and tables
+		// divers table
 		driverModel = new DefaultTableModel() {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -276,6 +344,7 @@ public class App {
 		scrollPaneDrivers.setBounds(12, 12, 1137, 350);
 		driverPanel.add(scrollPaneDrivers);
 
+		// teams table
 		teamModel = new DefaultTableModel() {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -313,11 +382,38 @@ public class App {
 
 			}
 		});
-		teamTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		teamTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
 
 		JScrollPane scrollPaneTeams = new JScrollPane(teamTable);
 		scrollPaneTeams.setBounds(12, 12, 670, 450);
 		teamPanel.add(scrollPaneTeams);
+
+		// karts table
+
+		kartModel = new DefaultTableModel() {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
+		kartModel.addColumn("ID");
+		kartModel.addColumn("available");
+
+		kartTable = new JTable(kartModel);
+		kartTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int i = kartTable.getSelectedRow();
+				kart_id = (int) kartTable.getModel().getValueAt(i, 0);
+				kart = KartDAO.selectKart(kart_id);
+			}
+		});
+		kartPanel.setLayout(null);
+		kartTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+
+		JScrollPane scrollPaneKarts = new JScrollPane(kartTable);
+		scrollPaneKarts.setBounds(12, 12, 453, 403);
+		kartPanel.add(scrollPaneKarts);
 
 		JLabel lblTeamName = new JLabel("Team name:");
 		lblTeamName.setBounds(12, 498, 101, 15);
@@ -436,10 +532,9 @@ public class App {
 					driver = new Driver(name, dob, age, laps, races, podiums, wins, img);
 					DriverDAO.insertDriver(driver);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver inserted successfully");
-					refreshDriverTable();
-					refreshComboBox();
+					refreshAll();
 				} catch (IllegalArgumentException iae) {
-					JOptionPane.showMessageDialog(null, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -449,37 +544,40 @@ public class App {
 		JButton btnUpdateDriver = new JButton("Update");
 		btnUpdateDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				driver = DriverDAO.selectDriver(driver_id);
-				String name = textFieldDriverName.getText();
-				if (name.isEmpty()) {
-					throw new IllegalArgumentException("Name cannot be empty");
-				}
-				Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
-				LocalDate dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-				LocalDate today = LocalDate.now();
-				int age = Period.between(dob, today).getYears();
-
-				int laps = parseTextFieldToInt(textFieldLaps);
-				int races = parseTextFieldToInt(textFieldRaces);
-				int podiums = parseTextFieldToInt(textFieldPodiums);
-				int wins = parseTextFieldToInt(textFieldWins);
-				int team = 0;
-				int kart = 0;
-				Blob img = null;
-				if (!textFieldDriverImageText.getText().isEmpty()) {
-					try {
-						String imagePath = textFieldDriverImageText.getText();
-						byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
-						img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
-					} catch (Exception imgException) {
-
+				if (driver_id == 0) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Not driver selected", "Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+					driver = DriverDAO.selectDriver(driver_id);
+					String name = textFieldDriverName.getText();
+					if (name.isEmpty()) {
+						throw new IllegalArgumentException("Name cannot be empty");
 					}
+					Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+					LocalDate dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+					LocalDate today = LocalDate.now();
+					int age = Period.between(dob, today).getYears();
+
+					int laps = parseTextFieldToInt(textFieldLaps);
+					int races = parseTextFieldToInt(textFieldRaces);
+					int podiums = parseTextFieldToInt(textFieldPodiums);
+					int wins = parseTextFieldToInt(textFieldWins);
+					int team = 0;
+					int kart = 0;
+					Blob img = null;
+					if (!textFieldDriverImageText.getText().isEmpty()) {
+						try {
+							String imagePath = textFieldDriverImageText.getText();
+							byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+							img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
+						} catch (Exception imgException) {
+
+						}
+					}
+					// without team and kart
+					DriverDAO.updateDriver(driver, name, dob, age, laps, races, podiums, wins, team, kart, img);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver updated successfully");
+					refreshAll();
 				}
-				// without team and kart
-				DriverDAO.updateDriver(driver, name, dob, age, laps, races, podiums, wins, team, kart, img);
-				JOptionPane.showMessageDialog(frmKartingdatabase, "Driver updated successfully");
-				refreshDriverTable();
-				refreshComboBox();
 			}
 		});
 		btnUpdateDriver.setBounds(521, 706, 117, 25);
@@ -488,18 +586,31 @@ public class App {
 		JButton btnDeleteDriver = new JButton("Delete");
 		btnDeleteDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				DriverDAO.deleteDriver(driver_id);
-				lblDriverImg.setIcon(null);
-				JOptionPane.showMessageDialog(frmKartingdatabase, "Driver deleted successfully");
-				refreshDriverTable();
-				refreshComboBox();
+				if (driver_id == 0) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No driver selected", "Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+					driver = DriverDAO.selectDriver(driver_id);
+					team = TeamDAO.selectTeam(driver.getTeam());
+					if (team != null) {
+						TeamDAO.updateTeamRemoveDriver(team, driver_id);
+					}
+					kart = KartDAO.selectKart(driver.getKart());
+					if (kart != null) {
+						KartDAO.updateKart(kart, true);
+					}
+					DriverDAO.deleteDriver(driver_id);
+					lblDriverImg.setIcon(null);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver deleted successfully");
+					refreshAll();
+					driver_id = 0;
+				}
 			}
 		});
 		btnDeleteDriver.setBounds(840, 706, 117, 25);
 		driverPanel.add(btnDeleteDriver);
 
 		lblDriverImg = new JLabel();
-		lblDriverImg.setBounds(748, 384, 300, 300);
+		lblDriverImg.setBounds(808, 384, 300, 300);
 		driverPanel.add(lblDriverImg);
 
 		lblTeamImg = new JLabel("");
@@ -570,10 +681,9 @@ public class App {
 					team = new Team(name, date, img);
 					TeamDAO.insertTeam(team);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Team inserted successfully");
-					refreshTeamTable();
-					refreshComboBox();
+					refreshAll();
 				} catch (IllegalArgumentException iae) {
-					JOptionPane.showMessageDialog(null, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -581,17 +691,50 @@ public class App {
 		teamPanel.add(btnAddTeam);
 
 		JButton btnUpdateTeam = new JButton("Upd");
+		btnUpdateTeam.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (team_id == 0) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No team selected", "Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+					team = TeamDAO.selectTeam(team_id);
+					String name = textFieldTeamName.getText();
+					if (name.isEmpty()) {
+						throw new IllegalArgumentException("Name cannot be empty");
+					} else if (TeamDAO.selectTeam(name) != null && TeamDAO.selectTeam(name).getName().equals(name)) {
+						throw new IllegalArgumentException("Duplicated name");
+					}
+					Blob img = null;
+					if (!textFieldTeamImageText.getText().isEmpty()) {
+						try {
+							String imagePath = textFieldTeamImageText.getText();
+							byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+							img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
+						} catch (Exception imgException) {
+
+						}
+					}
+					TeamDAO.updateTeam(team, name, img);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Team updated successfully");
+					lblTeamImg.setIcon(null);
+					refreshAll();
+				}
+			}
+		});
 		btnUpdateTeam.setBounds(165, 579, 82, 25);
 		teamPanel.add(btnUpdateTeam);
 
 		JButton btnDeleteTeam = new JButton("Del");
 		btnDeleteTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				TeamDAO.deleteTeam(team_id);
-				lblTeamImg.setIcon(null);
-				JOptionPane.showMessageDialog(frmKartingdatabase, "Team deleted successfully");
-				refreshTeamTable();
-				refreshComboBox();
+				if (team_id == 0) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No team selected", "Error",
+							JOptionPane.ERROR_MESSAGE);
+				} else {
+					TeamDAO.deleteTeam(team_id);
+					lblTeamImg.setIcon(null);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Team deleted successfully");
+					refreshAll();
+				}
 			}
 		});
 		btnDeleteTeam.setBounds(293, 579, 82, 25);
@@ -620,7 +763,7 @@ public class App {
 		comboBoxAddTeam = new JComboBox();
 		comboBoxAddTeam.setBounds(640, 579, 144, 25);
 		teamPanel.add(comboBoxAddTeam);
-		
+
 		lblRemoveTeam = new JLabel();
 		lblRemoveTeam.setBounds(866, 579, 144, 25);
 		teamPanel.add(lblRemoveTeam);
@@ -636,7 +779,6 @@ public class App {
 				} else {
 					lblRemoveTeam.setText(null);
 				}
-				
 			}
 		});
 		comboBoxRemoveDriver.setBounds(866, 530, 144, 25);
@@ -646,14 +788,18 @@ public class App {
 		btnAddDriverToTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxAddDriver.getSelectedItem();
-				Driver driver = DriverDAO.selectDriver(driverName);
 				String teamName = (String) comboBoxAddTeam.getSelectedItem();
-				Team team = TeamDAO.selectTeam(teamName);
-				DriverDAO.updateDriver(driver, team.getTeam_id());
-				TeamDAO.updateTeamAddDriver(team, driver);
-				refreshComboBox();
-				refreshTeamTable();
-				refreshDriverTable();
+				if (driverName == null || teamName == null) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, "You must select driver and team", "Error",
+							JOptionPane.ERROR_MESSAGE);
+				} else {
+					Driver driver = DriverDAO.selectDriver(driverName);
+					Team team = TeamDAO.selectTeam(teamName);
+					DriverDAO.updateDriverTeam(driver, team.getTeam_id());
+					TeamDAO.updateTeamAddDriver(team, driver);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver added to team successfully");
+					refreshAll();
+				}
 			}
 		});
 		btnAddDriverToTeam.setBounds(665, 631, 90, 25);
@@ -663,20 +809,132 @@ public class App {
 		btnRemoveDriverFromTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxRemoveDriver.getSelectedItem();
-				Driver driver = DriverDAO.selectDriver(driverName);
-				Team team = TeamDAO.selectTeam(driver.getTeam());
-				DriverDAO.updateDriver(driver, 0);
-				TeamDAO.updateTeamRemoveDriver(team, driver.getDriver_id());
-				refreshComboBox();
-				refreshTeamTable();
-				refreshDriverTable();
+				if (driverName == null) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, "You must select driver", "Error",
+							JOptionPane.ERROR_MESSAGE);
+				} else {
+					Driver driver = DriverDAO.selectDriver(driverName);
+					Team team = TeamDAO.selectTeam(driver.getTeam());
+					DriverDAO.updateDriverTeam(driver, 0);
+					TeamDAO.updateTeamRemoveDriver(team, driver.getDriver_id());
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver removed from team successfully");
+					refreshAll();
+				}
 			}
 		});
 		btnRemoveDriverFromTeam.setBounds(891, 631, 90, 25);
 		teamPanel.add(btnRemoveDriverFromTeam);
 
-		refreshDriverTable();
-		refreshTeamTable();
-		refreshComboBox();
+		JButton btnAddKart = new JButton("Add");
+		btnAddKart.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				kart = new Kart(true);
+				KartDAO.insertKart(kart);
+				JOptionPane.showMessageDialog(frmKartingdatabase, "Kart added successfully");
+				refreshAll();
+			}
+		});
+		btnAddKart.setBounds(64, 465, 117, 25);
+		kartPanel.add(btnAddKart);
+
+		JButton btnDeleteKart = new JButton("Delete");
+		btnDeleteKart.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (kart_id == 0) {
+					JOptionPane.showMessageDialog(null, "No kart selected", "Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+					KartDAO.deleteKart(kart_id);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Kart removed successfully");
+					refreshAll();
+					driver_id = 0;
+				}
+			}
+		});
+		btnDeleteKart.setBounds(275, 465, 117, 25);
+		kartPanel.add(btnDeleteKart);
+
+		JLabel lblAssignKart = new JLabel("Assign kart");
+		lblAssignKart.setBounds(523, 76, 100, 15);
+		kartPanel.add(lblAssignKart);
+
+		JLabel lblDriver = new JLabel("Driver:");
+		lblDriver.setBounds(533, 103, 70, 15);
+		kartPanel.add(lblDriver);
+
+		JLabel lblKart = new JLabel("Kart:");
+		lblKart.setBounds(533, 144, 70, 15);
+		kartPanel.add(lblKart);
+
+		comboBoxAssignDriver = new JComboBox();
+		comboBoxAssignDriver.setBounds(621, 103, 136, 25);
+		kartPanel.add(comboBoxAssignDriver);
+
+		comboBoxAssignKart = new JComboBox();
+		comboBoxAssignKart.setBounds(621, 139, 136, 25);
+		kartPanel.add(comboBoxAssignKart);
+
+		JLabel lblUnassignKart = new JLabel("");
+		lblUnassignKart.setBounds(830, 144, 100, 15);
+		kartPanel.add(lblUnassignKart);
+
+		comboBoxUnassignDriver = new JComboBox();
+		comboBoxUnassignDriver.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (comboBoxUnassignDriver.getSelectedItem() != null) {
+					String driverName = (String) comboBoxUnassignDriver.getSelectedItem();
+					Driver driver = DriverDAO.selectDriver(driverName);
+					lblUnassignKart.setText(String.valueOf(driver.getKart()));
+				} else {
+					lblUnassignKart.setText(null);
+				}
+			}
+		});
+		comboBoxUnassignDriver.setBounds(830, 98, 136, 25);
+		kartPanel.add(comboBoxUnassignDriver);
+
+		JLabel lblTxt = new JLabel("Unassign Kart");
+		lblTxt.setBounds(802, 76, 100, 15);
+		kartPanel.add(lblTxt);
+
+		JButton btnAssign = new JButton("Assign");
+		btnAssign.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (comboBoxAssignDriver.getSelectedItem() == null || comboBoxAssignKart.getSelectedItem() == null) {
+					JOptionPane.showMessageDialog(null, "You must select driver and kart", "Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+					String driverName = (String) comboBoxAssignDriver.getSelectedItem();
+					int kartId = (int) comboBoxAssignKart.getSelectedItem();
+					Driver driver = DriverDAO.selectDriver(driverName);
+					Kart kart = KartDAO.selectKart(kartId);
+					DriverDAO.updateDriverKart(driver, kart.getKart_id());
+					KartDAO.updateKart(kart, false);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Kart assigned successfully");
+					refreshAll();
+				}
+			}
+		});
+		btnAssign.setBounds(593, 196, 117, 25);
+		kartPanel.add(btnAssign);
+
+		JButton btnUnassign = new JButton("Unassign");
+		btnUnassign.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				String driverName = (String) comboBoxUnassignDriver.getSelectedItem();
+				if (driverName == null) {
+					JOptionPane.showMessageDialog(null, "You must select driver", "Error", JOptionPane.ERROR_MESSAGE);
+				} else {
+					Driver driver = DriverDAO.selectDriver(driverName);
+					Kart kart = KartDAO.selectKart(driver.getKart());
+					KartDAO.updateKart(kart, true);
+					DriverDAO.updateDriverKart(driver, 0);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Kart unassigned successfully");
+					refreshAll();
+				}
+			}
+		});
+		btnUnassign.setBounds(838, 196, 117, 25);
+		kartPanel.add(btnUnassign);
+
+		refreshAll();
 	}
 }
