@@ -28,6 +28,7 @@ import com.hibernate.dao.KartDAO;
 import com.hibernate.dao.TeamDAO;
 import com.hibernate.model.Driver;
 import com.hibernate.model.Kart;
+import com.hibernate.model.Lap;
 import com.hibernate.model.Team;
 
 import javax.swing.JPanel;
@@ -122,7 +123,8 @@ public class App {
 	private int kart_id = 0;
 	
 	// lap variables
-	
+	private Lap lap;
+	private int lap_id = 0;
 
 	/**
 	 * Launch the application.
@@ -795,8 +797,8 @@ public class App {
 				} else {
 					Driver driver = DriverDAO.selectDriver(driverName);
 					Team team = TeamDAO.selectTeam(teamName);
-					DriverDAO.updateDriverTeam(driver, team.getTeam_id());
 					TeamDAO.updateTeamAddDriver(team, driver);
+					DriverDAO.updateDriverTeam(driver, team.getTeam_id());
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver added to team successfully");
 					refreshAll();
 				}
@@ -815,8 +817,8 @@ public class App {
 				} else {
 					Driver driver = DriverDAO.selectDriver(driverName);
 					Team team = TeamDAO.selectTeam(driver.getTeam());
-					DriverDAO.updateDriverTeam(driver, 0);
 					TeamDAO.updateTeamRemoveDriver(team, driver.getDriver_id());
+					DriverDAO.updateDriverTeam(driver, 0);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver removed from team successfully");
 					refreshAll();
 				}

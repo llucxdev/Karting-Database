@@ -1,6 +1,7 @@
 package com.hibernate.dao;
 
 import java.sql.Blob;
+import java.util.Iterator;
 import java.util.List;
 
 import org.hibernate.Session;
@@ -107,15 +108,13 @@ public class TeamDAO {
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
 			List<Driver> driversList = team.getDrivers();
-			if (driversList.size()==1) {
-				driversList.clear();
-			} else {
-				for (Driver d : driversList) {
-					if (d.getDriver_id() == id) {
-						team.removeDriver(d);
-					}
-				}
-			}
+	        Iterator<Driver> iterator = driversList.iterator();
+	        while (iterator.hasNext()) {
+	            Driver driver = iterator.next();
+	            if (driver.getDriver_id() == id) {
+	                iterator.remove();
+	            }
+	        }
 			session.merge(team);
 			transaction.commit();
 		} catch (Exception e) {
