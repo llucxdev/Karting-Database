@@ -44,6 +44,23 @@ public class DriverDAO {
 		}
 		return driver;
 	}
+	
+	public static Driver selectDriverByKart(int kart) {
+		Transaction transaction = null;
+		Driver driver = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			Query<Driver> query = session.createQuery("FROM Driver WHERE kart = :kart", Driver.class);
+			query.setParameter("kart", kart);
+			driver = query.uniqueResult();
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+		return driver;
+	}
 
 	public static List<Driver> selectAllDrivers() {
 		Transaction transaction = null;

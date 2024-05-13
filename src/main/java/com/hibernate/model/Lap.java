@@ -3,9 +3,20 @@ package com.hibernate.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name="lap")
 public class Lap {
+	@Id
+	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private int lap_id;
     private int driver_id;
+    private int kart_id;
     private LocalTime time;
     private LocalDate date;
     
@@ -13,10 +24,10 @@ public class Lap {
     	super();
     }
     
-	public Lap(int lap_id, int driver_id, LocalTime time, LocalDate date) {
+	public Lap(int driver_id, int kart_id, LocalTime time, LocalDate date) {
 		super();
-		this.lap_id = lap_id;
 		this.driver_id = driver_id;
+		this.kart_id = kart_id;
 		this.time = time;
 		this.date = date;
 	}
@@ -35,6 +46,14 @@ public class Lap {
 
 	public void setDriver_id(int driver_id) {
 		this.driver_id = driver_id;
+	}
+
+	public int getKart_id() {
+		return kart_id;
+	}
+
+	public void setKart_id(int kart_id) {
+		this.kart_id = kart_id;
 	}
 
 	public LocalTime getTime() {
