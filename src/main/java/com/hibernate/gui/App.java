@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Period;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -33,6 +34,7 @@ import com.hibernate.model.Driver;
 import com.hibernate.model.Kart;
 import com.hibernate.model.Lap;
 import com.hibernate.model.Team;
+import com.hibernate.util.LapTimer;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -53,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Blob;
 import javax.swing.JComboBox;
+import java.awt.Color;
 
 class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
 	private String datePattern = "yyyy-MM-dd";
@@ -135,9 +138,7 @@ public class App {
 	// lap variables
 	private Lap lap;
 	private int lap_id = 0;
-	private boolean onLap = false;
-	private LocalDateTime start;
-	private LocalDateTime finish;
+	private LapTimer lapTimer = new LapTimer();
 
 	/**
 	 * Launch the application.
@@ -273,7 +274,7 @@ public class App {
 	
 	public void refreshComboBoxLaps() {
 		comboBoxDriverLap.removeAllItems();
-		List<Driver> driverList = DriverDAO.selectDriversWithKart();
+		List<Driver> driverList = DriverDAO.selectAllDrivers();
 		if (driverList != null)
 			driverList.forEach(d -> {
 				comboBoxDriverLap.addItem(d.getName());
@@ -961,12 +962,12 @@ public class App {
 		comboBoxUnassignDriver = new JComboBox();
 		comboBoxUnassignDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (comboBoxUnassignDriver.getSelectedItem() != null) {
-					String driverName = (String) comboBoxUnassignDriver.getSelectedItem();
+				String driverName = (String) comboBoxUnassignDriver.getSelectedItem();
+				if (driverName == null) {
+					lblUnassignKart.setText(null);
+				} else {
 					Driver driver = DriverDAO.selectDriver(driverName);
 					lblUnassignKart.setText(String.valueOf(driver.getKart()));
-				} else {
-					lblUnassignKart.setText(null);
 				}
 			}
 		});
@@ -980,10 +981,10 @@ public class App {
 		JButton btnAssign = new JButton("Assign");
 		btnAssign.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (comboBoxAssignDriver.getSelectedItem() == null || comboBoxAssignKart.getSelectedItem() == null) {
+				String driverName = (String) comboBoxAssignDriver.getSelectedItem();
+				if (driverName == null || comboBoxAssignKart.getSelectedItem() == null) {
 					JOptionPane.showMessageDialog(null, "You must select driver and kart", "Error", JOptionPane.ERROR_MESSAGE);
 				} else {
-					String driverName = (String) comboBoxAssignDriver.getSelectedItem();
 					int kartId = (int) comboBoxAssignKart.getSelectedItem();
 					Driver driver = DriverDAO.selectDriver(driverName);
 					Kart kart = KartDAO.selectKart(kartId);
@@ -1008,6 +1009,11 @@ public class App {
 		JLabel lblKartLap = new JLabel("");
 		lblKartLap.setBounds(804, 108, 70, 15);
 		lapPanel.add(lblKartLap);
+		
+		JLabel lblOnLap = new JLabel("");
+		lblOnLap.setForeground(Color.RED);
+		lblOnLap.setBounds(958, 108, 46, 14);
+		lapPanel.add(lblOnLap);
 
 		JButton btnUnassign = new JButton("Unassign");
 		btnUnassign.addActionListener(new ActionListener() {
@@ -1032,8 +1038,12 @@ public class App {
 		comboBoxDriverLap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxDriverLap.getSelectedItem();
-				Driver driver = DriverDAO.selectDriver(driverName);
-				lblKartLap.setText(String.valueOf(driver.getKart()));
+				if (driverName != null) {
+					Driver driver = DriverDAO.selectDriver(driverName);
+					lblKartLap.setText(String.valueOf(driver.getKart()));
+				} else {
+					lblKartLap.setText(null);
+				}
 			}
 		});
 		comboBoxDriverLap.setBounds(621, 103, 145, 25);
@@ -1042,11 +1052,18 @@ public class App {
 		JButton btnStartLap = new JButton("Start lap");
 		btnStartLap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (onLap == false) {
-					onLap = true;
-					start = LocalDateTime.now();
+				String driverName = (String) comboBoxDriverLap.getSelectedItem();
+				String kartId = lblKartLap.getText();
+				if(driverName == null || kartId == null) {
+					JOptionPane.showMessageDialog(null, "You must select driver with assigned kart", "Error", JOptionPane.ERROR_MESSAGE);
 				} else {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "Someone is on lap!");
+					try {
+	                    lapTimer.startLap();
+	                    lblOnLap.setText("On Lap");
+	                    comboBoxDriverLap.setEnabled(false);
+	                } catch (IllegalStateException e) {
+	                    JOptionPane.showMessageDialog(frmKartingdatabase, e.getMessage());
+	                }
 				}
 			}
 		});
@@ -1056,23 +1073,38 @@ public class App {
 		JButton btnFinishLap = new JButton("Finish lap");
         btnFinishLap.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
-                if (onLap) {
-                    finish = LocalDateTime.now();
-                    Duration durationLap = Duration.between(start, finish);
-                    long millis = durationLap.toMillis();
-                    long minutes = (millis / (1000 * 60)) % 60;
-                    long seconds = (millis / 1000) % 60;
-                    long millisRemainder = millis % 1000;
-                    String lapTime = String.format("%02d:%02d:%03d", minutes, seconds, millisRemainder);
-                   System.out.println("Lap time: " + lapTime); 
-                    onLap = false;
-                } else {
-                    JOptionPane.showMessageDialog(null, "No one is on lap!");
+            	try {
+                    LocalTime lapTime = lapTimer.finishLap();
+                    lblOnLap.setText(null);
+                    comboBoxDriverLap.setEnabled(true);
+    				String driverName = (String) comboBoxDriverLap.getSelectedItem();
+                    Driver driver = DriverDAO.selectDriver(driverName);
+                    lap = new Lap(driver.getDriver_id(), driver.getKart(), lapTime, LocalDate.now());
+                    LapDAO.insertLap(lap);
+                    refreshAll();
+                } catch (IllegalStateException e) {
+                    JOptionPane.showMessageDialog(frmKartingdatabase, e.getMessage());
                 }
             }
         });
         btnFinishLap.setBounds(804, 165, 117, 25);
 		lapPanel.add(btnFinishLap);
+		
+		JButton btnDeleteLap = new JButton("Delete lap");
+		btnDeleteLap.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(lap_id != 0) {
+					LapDAO.deleteLap(lap_id);
+                    JOptionPane.showMessageDialog(frmKartingdatabase, "Lap deleted successfully");
+					lap_id = 0;
+					refreshAll();
+				} else {
+                    JOptionPane.showMessageDialog(frmKartingdatabase, "No lap selected");
+				}
+			}
+		});
+		btnDeleteLap.setBounds(960, 166, 117, 25);
+		lapPanel.add(btnDeleteLap);
 
 		refreshAll();
 	}
