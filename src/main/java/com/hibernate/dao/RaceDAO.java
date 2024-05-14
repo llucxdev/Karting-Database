@@ -10,7 +10,7 @@ import com.hibernate.model.Race;
 import com.hibernate.util.HibernateUtil;
 
 public class RaceDAO {
-	
+
 	public static Race selectRace(int id) {
 		Transaction transaction = null;
 		Race race = null;
@@ -25,7 +25,7 @@ public class RaceDAO {
 		}
 		return race;
 	}
-	
+
 	public static List<Race> selectAllRaces() {
 		Transaction transaction = null;
 		List<Race> raceList = null;
@@ -40,7 +40,20 @@ public class RaceDAO {
 		}
 		return raceList;
 	}
-	
+
+	public static void insertRace(Race race) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			session.persist(race);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
+
 	public static void updateRace(Race race, LocalDate date, int laps) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -55,7 +68,7 @@ public class RaceDAO {
 			}
 		}
 	}
-	
+
 	public static void deleteRace(int id) {
 		Transaction transaction = null;
 		Race race = null;

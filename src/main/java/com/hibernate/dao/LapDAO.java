@@ -23,7 +23,7 @@ public class LapDAO {
 		}
 		return lap;
 	}
-	
+
 	public static List<Lap> selectAllLaps() {
 		Transaction transaction = null;
 		List<Lap> lapList = null;
@@ -38,7 +38,7 @@ public class LapDAO {
 		}
 		return lapList;
 	}
-	
+
 	public static void insertLap(Lap lap) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -51,7 +51,7 @@ public class LapDAO {
 			}
 		}
 	}
-	
+
 	public static void updateLap(Lap lap, boolean available) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -65,7 +65,7 @@ public class LapDAO {
 			}
 		}
 	}
-	
+
 	public static void deleteLap(int id) {
 		Transaction transaction = null;
 		Lap lap = null;

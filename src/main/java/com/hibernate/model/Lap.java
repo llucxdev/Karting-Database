@@ -11,20 +11,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name="lap")
+@Table(name = "lap")
 public class Lap {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
 	private int lap_id;
-    private int driver_id;
-    private int kart_id;
-    private Timestamp time;
-    private LocalDate date;
-    
-    public Lap() {
-    	super();
-    }
-    
+	private int driver_id;
+	private int kart_id;
+	private Timestamp time;
+	private LocalDate date;
+
+	public Lap() {
+		super();
+	}
+
 	public Lap(int driver_id, int kart_id, Timestamp time, LocalDate date) {
 		super();
 		this.driver_id = driver_id;

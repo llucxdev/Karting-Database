@@ -174,6 +174,28 @@ public class DriverDAO {
 		}
 	}
 	
+	public static void updateDriver(Driver driver, String name, LocalDate dob, int age, int laps, int races,
+			int podiums, int wins, Blob img) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			driver.setName(name);
+			driver.setDob(dob);
+			driver.setAge(age);
+			driver.setLaps(laps);
+			driver.setRaces(races);
+			driver.setPodiums(podiums);
+			driver.setWins(wins);
+			driver.setImg(img);
+			session.merge(driver);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
+	
 	public static void updateDriverTeam(Driver driver, int team) {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
