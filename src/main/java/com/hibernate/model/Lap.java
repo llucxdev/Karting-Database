@@ -1,5 +1,6 @@
 package com.hibernate.model;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -17,14 +18,14 @@ public class Lap {
 	private int lap_id;
     private int driver_id;
     private int kart_id;
-    private LocalTime time;
+    private Timestamp time;
     private LocalDate date;
     
     public Lap() {
     	super();
     }
     
-	public Lap(int driver_id, int kart_id, LocalTime time, LocalDate date) {
+	public Lap(int driver_id, int kart_id, Timestamp time, LocalDate date) {
 		super();
 		this.driver_id = driver_id;
 		this.kart_id = kart_id;
@@ -56,11 +57,11 @@ public class Lap {
 		this.kart_id = kart_id;
 	}
 
-	public LocalTime getTime() {
+	public Timestamp getTime() {
 		return time;
 	}
 
-	public void setTime(LocalTime time) {
+	public void setTime(Timestamp time) {
 		this.time = time;
 	}
 

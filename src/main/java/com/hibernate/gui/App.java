@@ -54,6 +54,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Blob;
+import java.sql.Timestamp;
+
 import javax.swing.JComboBox;
 import java.awt.Color;
 
@@ -139,6 +141,7 @@ public class App {
 	private Lap lap;
 	private int lap_id = 0;
 	private LapTimer lapTimer = new LapTimer();
+	Thread lapTimerThread;
 
 	/**
 	 * Launch the application.
@@ -263,11 +266,15 @@ public class App {
 		List<Lap> lapList = LapDAO.selectAllLaps();
 		if (lapList != null)
 			lapList.forEach(l -> {
-				Object[] row = new Object[4];
+				Object[] row = new Object[5];
 				row[0] = l.getLap_id();
 				row[1] = l.getDriver_id();
-				row[2] = l.getTime();
-				row[3] = l.getDate();
+				row[2] = l.getKart_id();
+				Timestamp lapTime = l.getTime();
+				StringBuilder lapTimeStr = new StringBuilder(lapTime.toString());
+				lapTimeStr.delete(0, 14);
+				row[3] = lapTimeStr;
+				row[4] = l.getDate();
 				lapModel.addRow(row);
 			});
 	}
@@ -468,6 +475,7 @@ public class App {
 		};
 		lapModel.addColumn("ID");
 		lapModel.addColumn("Driver");
+		lapModel.addColumn("Kart");
 		lapModel.addColumn("Time");
 		lapModel.addColumn("Date");
 		
@@ -1003,17 +1011,21 @@ public class App {
 		lapPanel.add(lblDriver_1);
 		
 		JLabel lblKart_1 = new JLabel("Kart:");
-		lblKart_1.setBounds(784, 76, 70, 15);
+		lblKart_1.setBounds(804, 76, 70, 15);
 		lapPanel.add(lblKart_1);
 		
 		JLabel lblKartLap = new JLabel("");
-		lblKartLap.setBounds(804, 108, 70, 15);
+		lblKartLap.setBounds(814, 108, 70, 15);
 		lapPanel.add(lblKartLap);
 		
 		JLabel lblOnLap = new JLabel("");
 		lblOnLap.setForeground(Color.RED);
-		lblOnLap.setBounds(958, 108, 46, 14);
+		lblOnLap.setBounds(960, 76, 46, 14);
 		lapPanel.add(lblOnLap);
+		
+		JLabel lblLapTime = new JLabel("");
+		lblLapTime.setBounds(970, 109, 107, 14);
+		lapPanel.add(lblLapTime);
 
 		JButton btnUnassign = new JButton("Unassign");
 		btnUnassign.addActionListener(new ActionListener() {
@@ -1040,7 +1052,11 @@ public class App {
 				String driverName = (String) comboBoxDriverLap.getSelectedItem();
 				if (driverName != null) {
 					Driver driver = DriverDAO.selectDriver(driverName);
-					lblKartLap.setText(String.valueOf(driver.getKart()));
+					if (driver.getKart() != 0) {
+						lblKartLap.setText(String.valueOf(driver.getKart()));
+					} else {
+						lblKartLap.setText(null);
+					}
 				} else {
 					lblKartLap.setText(null);
 				}
@@ -1061,6 +1077,25 @@ public class App {
 	                    lapTimer.startLap();
 	                    lblOnLap.setText("On Lap");
 	                    comboBoxDriverLap.setEnabled(false);
+	                    
+	                    lapTimerThread = new Thread(() -> {
+	                        while (lapTimer.isOnLap()) {
+	                            Duration duration = Duration.between(lapTimer.getStart(), LocalDateTime.now());
+	                            long minutes = duration.toMinutes();
+	                            long seconds = duration.minusMinutes(minutes).getSeconds();
+	                            long millis = duration.minusMinutes(minutes).minusSeconds(seconds).toMillis();
+
+	                            String lapTimeString = String.format("%02d:%02d:%03d", minutes, seconds, millis);
+	                            lblLapTime.setText(lapTimeString);
+
+	                            try {
+	                                Thread.sleep(1);
+	                            } catch (InterruptedException e) {
+	                                e.printStackTrace();
+	                            }
+	                        }
+	                    });
+	                    lapTimerThread.start();
 	                } catch (IllegalStateException e) {
 	                    JOptionPane.showMessageDialog(frmKartingdatabase, e.getMessage());
 	                }
@@ -1074,8 +1109,10 @@ public class App {
         btnFinishLap.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
             	try {
-                    LocalTime lapTime = lapTimer.finishLap();
-                    lblOnLap.setText(null);
+                    Timestamp lapTime = lapTimer.finishLap();
+                    System.out.println(lapTime);
+                    lblOnLap.setText("Last lap");
+                    lapTimerThread.interrupt();
                     comboBoxDriverLap.setEnabled(true);
     				String driverName = (String) comboBoxDriverLap.getSelectedItem();
                     Driver driver = DriverDAO.selectDriver(driverName);
