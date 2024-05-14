@@ -201,6 +201,22 @@ public class DriverDAO {
 			}
 		}
 	}
+	
+	public static void updateDriverLap(Driver driver) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			int currentLaps = driver.getLaps();
+			currentLaps++;
+			driver.setLaps(currentLaps);
+			session.merge(driver);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
 
 	public static void deleteDriver(int id) {
 		Transaction transaction = null;

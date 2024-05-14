@@ -29,10 +29,12 @@ import org.jdatepicker.impl.UtilDateModel;
 import com.hibernate.dao.DriverDAO;
 import com.hibernate.dao.KartDAO;
 import com.hibernate.dao.LapDAO;
+import com.hibernate.dao.RaceDAO;
 import com.hibernate.dao.TeamDAO;
 import com.hibernate.model.Driver;
 import com.hibernate.model.Kart;
 import com.hibernate.model.Lap;
+import com.hibernate.model.Race;
 import com.hibernate.model.Team;
 import com.hibernate.util.LapTimer;
 
@@ -105,6 +107,9 @@ public class App {
 	
 	private DefaultTableModel lapModel;
 	private JTable lapTable;
+	
+	private DefaultTableModel raceModel;
+	private JTable raceTable;
 
 	// comboBox to add or remove driver from team
 	private JComboBox comboBoxAddDriver;
@@ -122,8 +127,11 @@ public class App {
 	private JLabel lblKart;
 
 	// datePicker variables
-	private UtilDateModel modelDatePicker;
-	private JDatePickerImpl datePicker;
+	private UtilDateModel modelDatePickerDriver;
+	private JDatePickerImpl datePickerDriver;
+	
+	private UtilDateModel modelDatePickerRace;
+	private JDatePickerImpl datePickerRace;
 
 	// driver variables
 	private Driver driver;
@@ -142,6 +150,11 @@ public class App {
 	private int lap_id = 0;
 	private LapTimer lapTimer = new LapTimer();
 	Thread lapTimerThread;
+	
+	// race variables
+	private Race race;
+	private int race_id = 0;
+	private JTextField textFieldRaceLaps;
 
 	/**
 	 * Launch the application.
@@ -287,6 +300,19 @@ public class App {
 				comboBoxDriverLap.addItem(d.getName());
 			});
 	}
+	
+	public void refreshRaceTable() {
+		raceModel.setRowCount(0);
+		List<Race> raceList = RaceDAO.selectAllRaces();
+		if (raceList != null)
+			raceList.forEach(r -> {
+				Object[] row = new Object[3];
+				row[0] = r.getRace_id();
+				row[1] = r.getDate();
+				row[2] = r.getLaps();
+				raceModel.addRow(row);
+			});
+	}
 
 	public void refreshAll() {
 		refreshDriverTable();
@@ -296,6 +322,7 @@ public class App {
 		refreshComboBoxKarts();
 		refreshLapTable();
 		refreshComboBoxLaps();
+		refreshRaceTable();
 	}
 
 	private int parseTextFieldToInt(JTextField textField) {
@@ -340,6 +367,10 @@ public class App {
 		JPanel racePanel = new JPanel();
 		tabbedPane.addTab("Race", null, racePanel, null);
 		racePanel.setLayout(null);
+		
+		JPanel raceResultsPanel = new JPanel();
+		tabbedPane.addTab("Race results", null, raceResultsPanel, null);
+		raceResultsPanel.setLayout(null);
 
 		// table models and tables
 		// divers table
@@ -368,7 +399,7 @@ public class App {
 				driver_id = (int) model.getValueAt(i, 0);
 				driver = DriverDAO.selectDriver(driver_id);
 				textFieldDriverName.setText(driver.getName());
-				modelDatePicker.setValue(Date.from(driver.getDob().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+				modelDatePickerDriver.setValue(Date.from(driver.getDob().atStartOfDay(ZoneId.systemDefault()).toInstant()));
 				textFieldLaps.setText(String.valueOf(driver.getLaps()));
 				textFieldRaces.setText(String.valueOf(driver.getRaces()));
 				textFieldPodiums.setText(String.valueOf(driver.getPodiums()));
@@ -495,7 +526,24 @@ public class App {
 		scrollPaneLaps.setBounds(12, 12, 562, 500);
 		lapPanel.add(scrollPaneLaps);
 		
+		// races table
+		raceModel = new DefaultTableModel() {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
+		raceModel.addColumn("ID");
+		raceModel.addColumn("Date");
+		raceModel.addColumn("Laps");
 		
+		raceTable = new JTable(raceModel);
+		raceTable.setLayout(null);
+		raceTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+		
+		JScrollPane scrollPaneRace = new JScrollPane(raceTable);
+		scrollPaneRace.setBounds(12, 12, 562, 500);
+		racePanel.add(scrollPaneRace);
 
 		JLabel lblTeamName = new JLabel("Team name:");
 		lblTeamName.setBounds(12, 498, 101, 15);
@@ -540,16 +588,16 @@ public class App {
 		lblWins.setBounds(90, 618, 70, 15);
 		driverPanel.add(lblWins);
 
-		modelDatePicker = new UtilDateModel();
+		modelDatePickerDriver = new UtilDateModel();
 		Properties properties = new Properties();
 		properties.put("text.today", "Today");
 		properties.put("text.month", "Month");
 		properties.put("text.year", "Year");
-		JDatePanelImpl datePanel = new JDatePanelImpl(modelDatePicker, properties);
+		JDatePanelImpl datePanelDriver = new JDatePanelImpl(modelDatePickerDriver, properties);
 
-		datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter());
-		datePicker.setBounds(439, 425, 150, 25);
-		driverPanel.add(datePicker);
+		datePickerDriver = new JDatePickerImpl(datePanelDriver, new DateLabelFormatter());
+		datePickerDriver.setBounds(439, 425, 150, 25);
+		driverPanel.add(datePickerDriver);
 
 		textFieldDriverName = new JTextField();
 		textFieldDriverName.setBounds(163, 425, 150, 25);
@@ -589,8 +637,8 @@ public class App {
 
 					LocalDate dob = null;
 					int age = 0;
-					if ((java.util.Date) datePicker.getModel().getValue() != null) {
-						Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+					if ((java.util.Date) datePickerDriver.getModel().getValue() != null) {
+						Date selectedDate = (java.util.Date) datePickerDriver.getModel().getValue();
 						dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 						LocalDate today = LocalDate.now();
 						age = Period.between(dob, today).getYears();
@@ -634,7 +682,7 @@ public class App {
 					if (name.isEmpty()) {
 						throw new IllegalArgumentException("Name cannot be empty");
 					}
-					Date selectedDate = (java.util.Date) datePicker.getModel().getValue();
+					Date selectedDate = (java.util.Date) datePickerDriver.getModel().getValue();
 					LocalDate dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 					LocalDate today = LocalDate.now();
 					int age = Period.between(dob, today).getYears();
@@ -723,6 +771,15 @@ public class App {
 		});
 		btnSelectDriverImage.setBounds(609, 470, 132, 25);
 		driverPanel.add(btnSelectDriverImage);
+		
+		JButton btnClearDriverImage = new JButton("Clear image");
+		btnClearDriverImage.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				textFieldDriverImageText.setText(null);
+			}
+		});
+		btnClearDriverImage.setBounds(609, 518, 132, 23);
+		driverPanel.add(btnClearDriverImage);
 
 		JButton btnSelectTeamImage = new JButton("Select Image");
 		btnSelectTeamImage.addActionListener(new ActionListener() {
@@ -769,7 +826,7 @@ public class App {
 				}
 			}
 		});
-		btnAddTeam.setBounds(31, 579, 82, 25);
+		btnAddTeam.setBounds(31, 631, 82, 25);
 		teamPanel.add(btnAddTeam);
 
 		JButton btnUpdateTeam = new JButton("Upd");
@@ -802,7 +859,7 @@ public class App {
 				}
 			}
 		});
-		btnUpdateTeam.setBounds(165, 579, 82, 25);
+		btnUpdateTeam.setBounds(165, 631, 82, 25);
 		teamPanel.add(btnUpdateTeam);
 
 		JButton btnDeleteTeam = new JButton("Del");
@@ -825,7 +882,7 @@ public class App {
 				}
 			}
 		});
-		btnDeleteTeam.setBounds(293, 579, 82, 25);
+		btnDeleteTeam.setBounds(293, 631, 82, 25);
 		teamPanel.add(btnDeleteTeam);
 
 		JLabel lblAddDriverToTeam = new JLabel("Add driver to team");
@@ -912,6 +969,15 @@ public class App {
 		});
 		btnRemoveDriverFromTeam.setBounds(891, 631, 90, 25);
 		teamPanel.add(btnRemoveDriverFromTeam);
+		
+		JButton btnClearTeamImage = new JButton("Clear image");
+		btnClearTeamImage.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				textFieldTeamImageText.setText(null);
+			}
+		});
+		btnClearTeamImage.setBounds(293, 580, 132, 23);
+		teamPanel.add(btnClearTeamImage);
 
 		JButton btnAddKart = new JButton("Add");
 		btnAddKart.addActionListener(new ActionListener() {
@@ -951,9 +1017,9 @@ public class App {
 		lblDriver.setBounds(533, 103, 70, 15);
 		kartPanel.add(lblDriver);
 
-		JLabel lblKart = new JLabel("Kart:");
-		lblKart.setBounds(533, 144, 70, 15);
-		kartPanel.add(lblKart);
+		JLabel lblKart1 = new JLabel("Kart:");
+		lblKart1.setBounds(533, 144, 70, 15);
+		kartPanel.add(lblKart1);
 
 		comboBoxAssignDriver = new JComboBox();
 		comboBoxAssignDriver.setBounds(621, 103, 136, 25);
@@ -1014,9 +1080,9 @@ public class App {
 		lblKart_1.setBounds(804, 76, 70, 15);
 		lapPanel.add(lblKart_1);
 		
-		JLabel lblKartLap = new JLabel("");
-		lblKartLap.setBounds(814, 108, 70, 15);
-		lapPanel.add(lblKartLap);
+		lblKart = new JLabel("");
+		lblKart.setBounds(814, 108, 70, 15);
+		lapPanel.add(lblKart);
 		
 		JLabel lblOnLap = new JLabel("");
 		lblOnLap.setForeground(Color.RED);
@@ -1053,12 +1119,12 @@ public class App {
 				if (driverName != null) {
 					Driver driver = DriverDAO.selectDriver(driverName);
 					if (driver.getKart() != 0) {
-						lblKartLap.setText(String.valueOf(driver.getKart()));
+						lblKart.setText(String.valueOf(driver.getKart()));
 					} else {
-						lblKartLap.setText(null);
+						lblKart.setText(null);
 					}
 				} else {
-					lblKartLap.setText(null);
+					lblKart.setText(null);
 				}
 			}
 		});
@@ -1069,7 +1135,7 @@ public class App {
 		btnStartLap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxDriverLap.getSelectedItem();
-				String kartId = lblKartLap.getText();
+				String kartId = lblKart.getText();
 				if(driverName == null || kartId == null) {
 					JOptionPane.showMessageDialog(null, "You must select driver with assigned kart", "Error", JOptionPane.ERROR_MESSAGE);
 				} else {
@@ -1118,6 +1184,7 @@ public class App {
                     Driver driver = DriverDAO.selectDriver(driverName);
                     lap = new Lap(driver.getDriver_id(), driver.getKart(), lapTime, LocalDate.now());
                     LapDAO.insertLap(lap);
+                    DriverDAO.updateDriverLap(driver);
                     refreshAll();
                 } catch (IllegalStateException e) {
                     JOptionPane.showMessageDialog(frmKartingdatabase, e.getMessage());
@@ -1142,6 +1209,26 @@ public class App {
 		});
 		btnDeleteLap.setBounds(960, 166, 117, 25);
 		lapPanel.add(btnDeleteLap);
+		
+		modelDatePickerRace = new UtilDateModel();
+		JDatePanelImpl datePanelRace = new JDatePanelImpl(modelDatePickerDriver, properties);
+		
+		datePickerRace = new JDatePickerImpl(datePanelRace, new DateLabelFormatter());
+		datePickerRace.setBounds(615, 102, 150, 25);
+		racePanel.add(datePickerRace);
+		
+		JLabel lblDate = new JLabel("Date:");
+		lblDate.setBounds(605, 76, 70, 15);
+		racePanel.add(lblDate);
+		
+		JLabel lblLaps2 = new JLabel("Laps:");
+		lblLaps2.setBounds(820, 76, 46, 14);
+		racePanel.add(lblLaps2);
+		
+		textFieldRaceLaps = new JTextField();
+		textFieldRaceLaps.setBounds(830, 102, 86, 20);
+		racePanel.add(textFieldRaceLaps);
+		textFieldRaceLaps.setColumns(10);
 
 		refreshAll();
 	}
