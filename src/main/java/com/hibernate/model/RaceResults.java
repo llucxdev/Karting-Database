@@ -1,13 +1,15 @@
 package com.hibernate.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
 @Table (name = "race_results")
 public class RaceResults {
-	
+	@Id
 	private int race;
+	@Id
 	private int driver;
 	private int position;
 	
