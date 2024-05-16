@@ -150,7 +150,8 @@ public class App {
 	private int kart_id = 0;
 	private int lap_id = 0;
 	private int race_id = 0;
-	private int raceResults_id = 0;
+	private int raceResults_raceId = 0;
+	private int raceResults_driverId = 0;
 	
 	// LapTimer util
 	private LapTimer lapTimer = new LapTimer();
@@ -603,8 +604,9 @@ public class App {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int i = raceResultsTable.getSelectedRow();
-				raceResults_id = (int) raceResultsTable.getModel().getValueAt(i, 0);
-				
+				raceResults_raceId = (int) raceResultsTable.getModel().getValueAt(i, 0);
+				Driver driver = DriverDAO.selectDriver((String) raceResultsTable.getModel().getValueAt(i, 1));
+				raceResults_driverId = (int) driver.getDriver_id();
 			}
 		});
 		raceResultsTable.setLayout(null);
@@ -1407,15 +1409,15 @@ public class App {
 		racePanel.add(btnDeleteRace);
 		
 		JLabel lblRaceId = new JLabel("Race id:");
-		lblRaceId.setBounds(598, 131, 46, 14);
+		lblRaceId.setBounds(598, 131, 73, 14);
 		raceResultsPanel.add(lblRaceId);
 		
 		JLabel lblDriver_2 = new JLabel("Driver:");
-		lblDriver_2.setBounds(795, 131, 46, 14);
+		lblDriver_2.setBounds(795, 131, 73, 14);
 		raceResultsPanel.add(lblDriver_2);
 		
 		JLabel lblNewLabel_1 = new JLabel("Position:");
-		lblNewLabel_1.setBounds(968, 131, 46, 14);
+		lblNewLabel_1.setBounds(968, 131, 73, 14);
 		raceResultsPanel.add(lblNewLabel_1);
 		
 		comboBoxRaceResult = new JComboBox();
@@ -1440,21 +1442,46 @@ public class App {
 					Driver driver = DriverDAO.selectDriver(driverName);
 					int driverId = driver.getDriver_id();
 					int position = parseTextFieldToInt(textFieldPosition);
+					if (position == 0) {
+						throw new IllegalArgumentException("You must introduce a valid position");
+					} 
 					RaceResults rr = new RaceResults(race, driverId, position);
 					RaceResultsDAO.insertRaceResult(rr);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "RaceResult added successfully");
 					refreshAll();
-				} catch (Exception e2) {
-					JOptionPane.showMessageDialog(frmKartingdatabase, e2.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				} catch (Exception duplicated) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, duplicated.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
-		btnAddResult.setBounds(726, 235, 100, 25);
+		btnAddResult.setBounds(726, 235, 115, 25);
 		raceResultsPanel.add(btnAddResult);
 		
 		JButton btnDeleteResult = new JButton("Delete result");
-		btnDeleteResult.setBounds(897, 235, 100, 23);
+		btnDeleteResult.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (raceResults_raceId != 0 || raceResults_driverId != 0) {
+					RaceResultsDAO.deleteRaceResult(raceResults_raceId, raceResults_driverId);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "Result deleted successfully");
+					refreshAll();
+					raceResults_raceId = 0;
+					raceResults_driverId = 0;
+					textFieldPosition.setText(null);
+				} else {
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No race result selected", "Error", JOptionPane.ERROR_MESSAGE);				
+				}
+			}
+		});
+		btnDeleteResult.setBounds(897, 235, 115, 23);
 		raceResultsPanel.add(btnDeleteResult);
+		
+		JLabel lblFilterByRace = new JLabel("Filter by race:");
+		lblFilterByRace.setBounds(598, 330, 104, 15);
+		raceResultsPanel.add(lblFilterByRace);
+		
+		JComboBox comboBoxFilterByRace = new JComboBox();
+		comboBoxFilterByRace.setBounds(625, 357, 125, 25);
+		raceResultsPanel.add(comboBoxFilterByRace);
 
 		refreshAll();
 	}

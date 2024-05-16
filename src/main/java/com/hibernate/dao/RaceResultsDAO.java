@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.query.Query;
 
 import com.hibernate.model.RaceResults;
 import com.hibernate.util.HibernateUtil;
@@ -40,26 +42,29 @@ public class RaceResultsDAO {
 		return raceResultsList;
 	}
 	
-	public static void insertRaceResult(RaceResults raceResults) {
+	public static void insertRaceResult(RaceResults raceResults) throws Exception {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
 			session.persist(raceResults);
 			transaction.commit();
-		} catch (Exception e) {
+		} catch (ConstraintViolationException e) {
+	        throw new Exception("Duplicated entry", e);
+	    } catch (Exception e) {
 			if (transaction != null) {
 				transaction.rollback();
 			}
 		}
 	}
 	
-	public static void deleteRaceResult(int id) {
+	public static void deleteRaceResult(int race, int driver) {
 		Transaction transaction = null;
-		RaceResults raceResults = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
-			raceResults = session.get(RaceResults.class, id);
-			session.remove(raceResults);
+	        Query<RaceResults> query = session.createQuery("DELETE FROM RaceResults WHERE race = :race AND driver = :driver", RaceResults.class);
+	        query.setParameter("race", race);
+	        query.setParameter("driver", driver);
+			query.executeUpdate();
 			transaction.commit();
 		} catch (Exception e) {
 			if (transaction != null) {
