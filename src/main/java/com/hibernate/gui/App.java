@@ -21,6 +21,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
+import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
@@ -328,12 +329,18 @@ public class App {
 			});
 	}
 	
-	public void refreshComboBoxRace() {
+	public void refreshComboBoxRaceResults() {
 		comboBoxRaceResult.removeAllItems();
+		comboBoxDriverResult.removeAllItems();
 		List<Race> raceList = RaceDAO.selectAllRaces();
+		List<Driver> driverList = DriverDAO.selectDriversWithKart();
 		if (raceList != null)
 			raceList.forEach(r -> {
 				comboBoxRaceResult.addItem(r.getRace_id());
+			});
+		if (driverList != null)
+			driverList.forEach(d -> {
+				comboBoxDriverResult.addItem(d.getName());
 			});
 	}
 
@@ -347,7 +354,7 @@ public class App {
 		refreshComboBoxLaps();
 		refreshRaceTable();
 		refreshRaceResultsTable();
-		refreshComboBoxRace();
+		refreshComboBoxRaceResults();
 	}
 
 	private int parseTextFieldToInt(JTextField textField) {
@@ -357,7 +364,7 @@ public class App {
 		} else if (text.isEmpty()) {
 			return 0;
 		} else {
-			throw new IllegalArgumentException("Only numbers supported at fields Laps, Races, Podiums and Wins");
+			throw new IllegalArgumentException("Only numbers supported");
 		}
 	}
 
@@ -1428,7 +1435,15 @@ public class App {
 		btnAddResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					
+					int race = (int) comboBoxRaceResult.getSelectedItem();
+					String driverName = (String) comboBoxDriverResult.getSelectedItem();
+					Driver driver = DriverDAO.selectDriver(driverName);
+					int driverId = driver.getDriver_id();
+					int position = parseTextFieldToInt(textFieldPosition);
+					RaceResults rr = new RaceResults(race, driverId, position);
+					RaceResultsDAO.insertRaceResult(rr);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "RaceResult added successfully");
+					refreshAll();
 				} catch (Exception e2) {
 					JOptionPane.showMessageDialog(frmKartingdatabase, e2.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 				}
