@@ -843,21 +843,26 @@ public class App {
 					JOptionPane.showMessageDialog(frmKartingdatabase, "No driver selected", "Error",
 							JOptionPane.ERROR_MESSAGE);
 				} else {
-					Driver driver = DriverDAO.selectDriver(driver_id);
-					Team team = TeamDAO.selectTeam(driver.getTeam());
-					if (team != null) {
-						TeamDAO.updateTeamRemoveDriver(team, driver_id);
+					List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResultsByDriver(driver_id);
+					if (raceResultsList != null) {
+						JOptionPane.showMessageDialog(frmKartingdatabase, "Driver cannot be removed: race results are associated with the driver", "Error", JOptionPane.ERROR_MESSAGE);
+					} else {
+						Driver driver = DriverDAO.selectDriver(driver_id);
+						Team team = TeamDAO.selectTeam(driver.getTeam());
+						if (team != null) {
+							TeamDAO.updateTeamRemoveDriver(team, driver_id);
+						}
+						Kart kart = KartDAO.selectKart(driver.getKart());
+						if (kart != null) {
+							KartDAO.updateKart(kart, true);
+						}
+						DriverDAO.deleteDriver(driver_id);
+						lblDriverImg.setIcon(null);
+						JOptionPane.showMessageDialog(frmKartingdatabase, "Driver deleted successfully");
+						refreshAll();
+						driver_id = 0;
+						btnClearAll.doClick();
 					}
-					Kart kart = KartDAO.selectKart(driver.getKart());
-					if (kart != null) {
-						KartDAO.updateKart(kart, true);
-					}
-					DriverDAO.deleteDriver(driver_id);
-					lblDriverImg.setIcon(null);
-					JOptionPane.showMessageDialog(frmKartingdatabase, "Driver deleted successfully");
-					refreshAll();
-					driver_id = 0;
-					btnClearAll.doClick();
 				}
 			}
 		});
@@ -1424,12 +1429,17 @@ public class App {
 		btnDeleteRace.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (race_id != 0) {
-					RaceDAO.deleteRace(race_id);
-					JOptionPane.showMessageDialog(frmKartingdatabase, "Race deleted successfully");
-					refreshAll();
-					race_id = 0;
-					textFieldRaceLaps.setText(null);
-					datePickerRace.getModel().setValue(null);
+					List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResultsByRace(race_id);
+					if (raceResultsList != null) {
+						JOptionPane.showMessageDialog(frmKartingdatabase, "Race cannot be removed: race results are associated with the race", "Error", JOptionPane.ERROR_MESSAGE);
+					} else {
+						RaceDAO.deleteRace(race_id);
+						JOptionPane.showMessageDialog(frmKartingdatabase, "Race deleted successfully");
+						refreshAll();
+						race_id = 0;
+						textFieldRaceLaps.setText(null);
+						datePickerRace.getModel().setValue(null);
+					}
 				} else {
 					JOptionPane.showMessageDialog(frmKartingdatabase, "No race selected", "Error",
 							JOptionPane.ERROR_MESSAGE);
@@ -1479,7 +1489,7 @@ public class App {
 					RaceResults rr = new RaceResults(race, driverId, position);
 					RaceResultsDAO.insertRaceResult(rr);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "RaceResult added successfully");
-					refreshAll();
+					refreshRaceResultsTable();
 				} catch (Exception duplicated) {
 					JOptionPane.showMessageDialog(frmKartingdatabase, duplicated.getMessage(), "Error",
 							JOptionPane.ERROR_MESSAGE);
@@ -1495,7 +1505,7 @@ public class App {
 				if (raceResults_raceId != 0 || raceResults_driverId != 0) {
 					RaceResultsDAO.deleteRaceResult(raceResults_raceId, raceResults_driverId);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Result deleted successfully");
-					refreshAll();
+					refreshRaceResultsTable();
 					raceResults_raceId = 0;
 					raceResults_driverId = 0;
 					textFieldPosition.setText(null);
