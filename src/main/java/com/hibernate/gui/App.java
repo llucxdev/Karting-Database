@@ -29,12 +29,14 @@ import com.hibernate.dao.DriverDAO;
 import com.hibernate.dao.KartDAO;
 import com.hibernate.dao.LapDAO;
 import com.hibernate.dao.RaceDAO;
+import com.hibernate.dao.RaceResultsDAO;
 import com.hibernate.dao.TeamDAO;
 import com.hibernate.model.Driver;
 import com.hibernate.model.Kart;
 import com.hibernate.model.Lap;
 import com.hibernate.model.Race;
 import com.hibernate.model.Team;
+import com.hibernate.model.RaceResults;
 import com.hibernate.util.LapTimer;
 
 import javax.swing.JPanel;
@@ -110,6 +112,9 @@ public class App {
 
 	private DefaultTableModel raceModel;
 	private JTable raceTable;
+	
+	private DefaultTableModel raceResultsModel;
+	private JTable raceResultsTable;
 
 	// comboBox to add or remove driver from team
 	private JComboBox comboBoxAddDriver;
@@ -125,6 +130,11 @@ public class App {
 	// comboBox laps
 	private JComboBox comboBoxDriverLap;
 	private JLabel lblKart;
+	
+	// comboBox and textField RaceResults
+	private JComboBox comboBoxRaceResult;
+	private JComboBox comboBoxDriverResult;
+	private JTextField textFieldPosition;
 
 	// datePicker variables
 	private UtilDateModel modelDatePickerDriver;
@@ -139,6 +149,7 @@ public class App {
 	private int kart_id = 0;
 	private int lap_id = 0;
 	private int race_id = 0;
+	private int raceResults_id = 0;
 	
 	// LapTimer util
 	private LapTimer lapTimer = new LapTimer();
@@ -302,6 +313,29 @@ public class App {
 				raceModel.addRow(row);
 			});
 	}
+	
+	public void refreshRaceResultsTable() {
+		raceResultsModel.setRowCount(0);
+		List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResults();
+		if (raceResultsList != null)
+			raceResultsList.forEach(r -> {
+				Object[] row = new Object[3];
+				row[0] = r.getRace();
+				Driver d = DriverDAO.selectDriver(r.getDriver());
+				row[1] = d.getName();
+				row[2] = r.getPosition();
+				raceResultsModel.addRow(row);
+			});
+	}
+	
+	public void refreshComboBoxRace() {
+		comboBoxRaceResult.removeAllItems();
+		List<Race> raceList = RaceDAO.selectAllRaces();
+		if (raceList != null)
+			raceList.forEach(r -> {
+				comboBoxRaceResult.addItem(r.getRace_id());
+			});
+	}
 
 	public void refreshAll() {
 		refreshDriverTable();
@@ -312,6 +346,8 @@ public class App {
 		refreshLapTable();
 		refreshComboBoxLaps();
 		refreshRaceTable();
+		refreshRaceResultsTable();
+		refreshComboBoxRace();
 	}
 
 	private int parseTextFieldToInt(JTextField textField) {
@@ -405,7 +441,8 @@ public class App {
 						ImageIcon resizedImage = new ImageIcon(image);
 						lblDriverImg.setIcon(resizedImage);
 					} catch (Exception imgException) {
-
+						JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
+								JOptionPane.ERROR_MESSAGE);
 					}
 				} else {
 					lblDriverImg.setIcon(null);
@@ -538,10 +575,37 @@ public class App {
 		});
 		raceTable.setLayout(null);
 		raceTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-
+		
 		JScrollPane scrollPaneRace = new JScrollPane(raceTable);
 		scrollPaneRace.setBounds(12, 12, 562, 731);
 		racePanel.add(scrollPaneRace);
+		
+		// raceResults table
+		raceResultsModel = new DefaultTableModel() {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
+		raceResultsModel.addColumn("Race Id");
+		raceResultsModel.addColumn("Driver");
+		raceResultsModel.addColumn("Position");
+
+		raceResultsTable = new JTable(raceResultsModel);
+		raceResultsTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int i = raceResultsTable.getSelectedRow();
+				raceResults_id = (int) raceResultsTable.getModel().getValueAt(i, 0);
+				
+			}
+		});
+		raceResultsTable.setLayout(null);
+		raceResultsTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+		
+		JScrollPane scrollPaneRaceResults = new JScrollPane(raceResultsTable);
+		scrollPaneRaceResults.setBounds(12, 12, 562, 731);
+		raceResultsPanel.add(scrollPaneRaceResults);
 
 		JLabel lblTeamName = new JLabel("Team name:");
 		lblTeamName.setBounds(12, 498, 101, 15);
@@ -670,7 +734,8 @@ public class App {
 							byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
 							img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
 						} catch (Exception imgException) {
-
+							JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
+									JOptionPane.ERROR_MESSAGE);
 						}
 					}
 					Driver driver = new Driver(name, dob, age, laps, races, podiums, wins, img);
@@ -720,7 +785,8 @@ public class App {
 								byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
 								img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
 							} catch (Exception imgException) {
-
+								JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
+										JOptionPane.ERROR_MESSAGE);
 							}
 						}
 						DriverDAO.updateDriver(driver, name, dob, age, laps, races, podiums, wins, img);
@@ -849,7 +915,8 @@ public class App {
 							byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
 							img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
 						} catch (Exception imgException) {
-
+							JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
+									JOptionPane.ERROR_MESSAGE);
 						}
 					}
 					Team team = new Team(name, date, img);
@@ -886,7 +953,8 @@ public class App {
 							byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
 							img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
 						} catch (Exception imgException) {
-
+							JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
+									JOptionPane.ERROR_MESSAGE);
 						}
 					}
 					TeamDAO.updateTeam(team, name, img);
@@ -1330,6 +1398,48 @@ public class App {
 		});
 		btnDeleteRace.setBounds(984, 172, 130, 25);
 		racePanel.add(btnDeleteRace);
+		
+		JLabel lblRaceId = new JLabel("Race id:");
+		lblRaceId.setBounds(598, 131, 46, 14);
+		raceResultsPanel.add(lblRaceId);
+		
+		JLabel lblDriver_2 = new JLabel("Driver:");
+		lblDriver_2.setBounds(795, 131, 46, 14);
+		raceResultsPanel.add(lblDriver_2);
+		
+		JLabel lblNewLabel_1 = new JLabel("Position:");
+		lblNewLabel_1.setBounds(968, 131, 46, 14);
+		raceResultsPanel.add(lblNewLabel_1);
+		
+		comboBoxRaceResult = new JComboBox();
+		comboBoxRaceResult.setBounds(625, 158, 125, 25);
+		raceResultsPanel.add(comboBoxRaceResult);
+		
+		comboBoxDriverResult = new JComboBox();
+		comboBoxDriverResult.setBounds(815, 159, 125, 25);
+		raceResultsPanel.add(comboBoxDriverResult);
+		
+		textFieldPosition = new JTextField();
+		textFieldPosition.setBounds(993, 158, 125, 25);
+		raceResultsPanel.add(textFieldPosition);
+		textFieldPosition.setColumns(10);
+		
+		JButton btnAddResult = new JButton("Add result");
+		btnAddResult.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					
+				} catch (Exception e2) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, e2.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		});
+		btnAddResult.setBounds(726, 235, 100, 25);
+		raceResultsPanel.add(btnAddResult);
+		
+		JButton btnDeleteResult = new JButton("Delete result");
+		btnDeleteResult.setBounds(897, 235, 100, 23);
+		raceResultsPanel.add(btnDeleteResult);
 
 		refreshAll();
 	}
