@@ -43,19 +43,59 @@ public class RaceResultsDAO {
 		return raceResultsList;
 	}
 	
-	public static void insertRaceResult(RaceResults raceResults) throws Exception {
-		Transaction transaction = null;
-		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			transaction = session.beginTransaction();
-			session.persist(raceResults);
-			transaction.commit();
-		} catch (ConstraintViolationException e) {
-	        throw new Exception("Duplicated entry", e);
+	public static List<RaceResults> selectAllRaceResultsByRace(int race) {
+	    Transaction transaction = null;
+	    List<RaceResults> raceResultsList = null;
+	    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+	        transaction = session.beginTransaction();
+	        Query<RaceResults> query = session.createQuery("FROM RaceResults WHERE race = :race", RaceResults.class);
+	        query.setParameter("race", race);
+	        raceResultsList = query.getResultList();
+	        transaction.commit();
 	    } catch (Exception e) {
-			if (transaction != null) {
-				transaction.rollback();
-			}
-		}
+	        if (transaction != null) {
+	            transaction.rollback();
+	        }
+	    }
+	    return raceResultsList;
+	}
+	
+	public static List<RaceResults> selectAllRaceResultsByDriver(int driver) {
+	    Transaction transaction = null;
+	    List<RaceResults> raceResultsList = null;
+	    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+	        transaction = session.beginTransaction();
+	        Query<RaceResults> query = session.createQuery("FROM RaceResults WHERE driver = :driver", RaceResults.class);
+	        query.setParameter("driver", driver);
+	        raceResultsList = query.getResultList();
+	        transaction.commit();
+	    } catch (Exception e) {
+	        if (transaction != null) {
+	            transaction.rollback();
+	        }
+	    }
+	    return raceResultsList;
+	}
+	
+	public static void insertRaceResult(RaceResults raceResults) throws Exception {
+	    Transaction transaction = null;
+	    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+	        transaction = session.beginTransaction();
+	        session.persist(raceResults);
+	        transaction.commit();
+	    } catch (ConstraintViolationException e) {
+	        if (e.getConstraintName().contains("PRIMARY")) {
+	            throw new Exception("Primary keys already exist in the database", e);
+	        } else if (e.getConstraintName().contains("position")) {
+	            throw new Exception("The position is already occupied by another driver", e);
+	        } else {
+	            throw new Exception("Error inserting race result", e);
+	        }
+	    } catch (Exception e) {
+	        if (transaction != null) {
+	            transaction.rollback();
+	        }
+	    }
 	}
 	
 	public static void deleteRaceResult(int race, int driver) {

@@ -46,6 +46,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JTextField;
 import javax.swing.JFileChooser;
@@ -86,17 +87,6 @@ public class App {
 
 	// swing variables
 	private JFrame frmKartingdatabase;
-	private JTextField textFieldDriverName;
-	private JTextField textFieldLaps;
-	private JTextField textFieldRaces;
-	private JTextField textFieldPodiums;
-	private JTextField textFieldWins;
-	private JTextField textFieldDriverImageText;
-	private JLabel lblDriverImg;
-	private JTextField textFieldTeamName;
-	private JTextField textFieldTeamImageText;
-	private JLabel lblTeamImg;
-	private JTextField textFieldRaceLaps;
 
 	// tables variables
 	private DefaultTableModel driverModel;
@@ -113,9 +103,23 @@ public class App {
 
 	private DefaultTableModel raceModel;
 	private JTable raceTable;
-	
+
 	private DefaultTableModel raceResultsModel;
 	private JTable raceResultsTable;
+
+	// driver swing variables
+	private JTextField textFieldDriverName;
+	private JTextField textFieldLaps;
+	private JTextField textFieldRaces;
+	private JTextField textFieldPodiums;
+	private JTextField textFieldWins;
+	private JTextField textFieldDriverImageText;
+	private JLabel lblDriverImg;
+
+	// team swing variables
+	private JTextField textFieldTeamName;
+	private JTextField textFieldTeamImageText;
+	private JLabel lblTeamImg;
 
 	// comboBox to add or remove driver from team
 	private JComboBox comboBoxAddDriver;
@@ -131,16 +135,24 @@ public class App {
 	// comboBox laps
 	private JComboBox comboBoxDriverLap;
 	private JLabel lblKart;
-	
-	// comboBox and textField RaceResults
+
+	// race swing variables
+	private JTextField textFieldRaceLaps;
+
+	// comboBox, textField and filter RaceResults
 	private JComboBox comboBoxRaceResult;
 	private JComboBox comboBoxDriverResult;
 	private JTextField textFieldPosition;
+	private JComboBox comboBoxFilterByRace;
+	private JComboBox comboBoxFilterByDriver;
+	private JCheckBox chckbxFilterByRace;
+	private JCheckBox chckbxFilterByDriver;
 
-	// datePicker variables
+	// datePicker driver variables
 	private UtilDateModel modelDatePickerDriver;
 	private JDatePickerImpl datePickerDriver;
 
+	// datePicker race variables
 	private UtilDateModel modelDatePickerRace;
 	private JDatePickerImpl datePickerRace;
 
@@ -152,7 +164,7 @@ public class App {
 	private int race_id = 0;
 	private int raceResults_raceId = 0;
 	private int raceResults_driverId = 0;
-	
+
 	// LapTimer util
 	private LapTimer lapTimer = new LapTimer();
 	Thread lapTimerThread;
@@ -315,33 +327,43 @@ public class App {
 				raceModel.addRow(row);
 			});
 	}
-	
+
 	public void refreshRaceResultsTable() {
-		raceResultsModel.setRowCount(0);
-		List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResults();
-		if (raceResultsList != null)
-			raceResultsList.forEach(r -> {
-				Object[] row = new Object[3];
-				row[0] = r.getRace();
-				Driver d = DriverDAO.selectDriver(r.getDriver());
-				row[1] = d.getName();
-				row[2] = r.getPosition();
-				raceResultsModel.addRow(row);
-			});
+	    raceResultsModel.setRowCount(0);
+	    int filterByRace = chckbxFilterByRace.isSelected() ? (int) comboBoxFilterByRace.getSelectedItem() : 0;
+	    int filterByDriver = chckbxFilterByDriver.isSelected() ? DriverDAO.selectDriver((String) comboBoxFilterByDriver.getSelectedItem()).getDriver_id() : 0;
+	    
+	    List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResults();
+	    if (raceResultsList != null) {
+	        raceResultsList.stream()
+	            .filter(r -> (filterByRace == 0 || r.getRace() == filterByRace) && (filterByDriver == 0 || r.getDriver() == filterByDriver))
+	            .forEach(r -> {
+	                Object[] row = new Object[3];
+	                row[0] = r.getRace();
+	                Driver d = DriverDAO.selectDriver(r.getDriver());
+	                row[1] = d.getName();
+	                row[2] = r.getPosition();
+	                raceResultsModel.addRow(row);
+	            });
+	    }
 	}
-	
+
 	public void refreshComboBoxRaceResults() {
 		comboBoxRaceResult.removeAllItems();
 		comboBoxDriverResult.removeAllItems();
+		comboBoxFilterByRace.removeAllItems();
+		comboBoxFilterByDriver.removeAllItems();
 		List<Race> raceList = RaceDAO.selectAllRaces();
 		List<Driver> driverList = DriverDAO.selectDriversWithKart();
 		if (raceList != null)
 			raceList.forEach(r -> {
 				comboBoxRaceResult.addItem(r.getRace_id());
+				comboBoxFilterByRace.addItem(r.getRace_id());
 			});
 		if (driverList != null)
 			driverList.forEach(d -> {
 				comboBoxDriverResult.addItem(d.getName());
+				comboBoxFilterByDriver.addItem(d.getName());
 			});
 	}
 
@@ -434,7 +456,8 @@ public class App {
 				driver_id = (int) model.getValueAt(i, 0);
 				Driver driver = DriverDAO.selectDriver(driver_id);
 				textFieldDriverName.setText(driver.getName());
-				modelDatePickerDriver.setValue(Date.from(driver.getDob().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+				modelDatePickerDriver
+						.setValue(Date.from(driver.getDob().atStartOfDay(ZoneId.systemDefault()).toInstant()));
 				textFieldLaps.setText(String.valueOf(driver.getLaps()));
 				textFieldRaces.setText(String.valueOf(driver.getRaces()));
 				textFieldPodiums.setText(String.valueOf(driver.getPodiums()));
@@ -493,7 +516,8 @@ public class App {
 						ImageIcon resizedImage = new ImageIcon(image);
 						lblTeamImg.setIcon(resizedImage);
 					} catch (Exception imgException) {
-						JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
+								JOptionPane.ERROR_MESSAGE);
 					}
 				} else {
 					lblDriverImg.setIcon(null);
@@ -577,17 +601,18 @@ public class App {
 				int i = raceTable.getSelectedRow();
 				race_id = (int) raceTable.getModel().getValueAt(i, 0);
 				Race race = RaceDAO.selectRace(race_id);
-				modelDatePickerRace.setValue(Date.from(race.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+				modelDatePickerRace
+						.setValue(Date.from(race.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant()));
 				textFieldRaceLaps.setText(String.valueOf(race.getLaps()));
 			}
 		});
 		raceTable.setLayout(null);
 		raceTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-		
+
 		JScrollPane scrollPaneRace = new JScrollPane(raceTable);
 		scrollPaneRace.setBounds(12, 12, 562, 731);
 		racePanel.add(scrollPaneRace);
-		
+
 		// raceResults table
 		raceResultsModel = new DefaultTableModel() {
 			@Override
@@ -611,7 +636,7 @@ public class App {
 		});
 		raceResultsTable.setLayout(null);
 		raceResultsTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
-		
+
 		JScrollPane scrollPaneRaceResults = new JScrollPane(raceResultsTable);
 		scrollPaneRaceResults.setBounds(12, 12, 562, 731);
 		raceResultsPanel.add(scrollPaneRaceResults);
@@ -664,7 +689,7 @@ public class App {
 		properties.put("text.today", "Today");
 		properties.put("text.month", "Month");
 		properties.put("text.year", "Year");
-		
+
 		JDatePanelImpl datePanelDriver = new JDatePanelImpl(modelDatePickerDriver, properties);
 		datePickerDriver = new JDatePickerImpl(datePanelDriver, new DateLabelFormatter());
 		datePickerDriver.setBounds(439, 425, 150, 25);
@@ -694,7 +719,7 @@ public class App {
 		textFieldWins.setColumns(10);
 		textFieldWins.setBounds(163, 616, 150, 25);
 		driverPanel.add(textFieldWins);
-		
+
 		JButton btnClearAll = new JButton("Clear all");
 		btnClearAll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -880,7 +905,7 @@ public class App {
 		});
 		btnClearDriverImage.setBounds(609, 518, 132, 23);
 		driverPanel.add(btnClearDriverImage);
-		
+
 		JButton btnClearTeam = new JButton("Clear");
 		btnClearTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -1102,7 +1127,8 @@ public class App {
 		btnDeleteKart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (kart_id == 0) {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "No kart selected", "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No kart selected", "Error",
+							JOptionPane.ERROR_MESSAGE);
 				} else {
 					Driver driver = DriverDAO.selectDriverByKart(kart_id);
 					DriverDAO.updateDriverKart(driver, 0);
@@ -1206,7 +1232,8 @@ public class App {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxUnassignDriver.getSelectedItem();
 				if (driverName == null) {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "You must select driver", "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "You must select driver", "Error",
+							JOptionPane.ERROR_MESSAGE);
 				} else {
 					Driver driver = DriverDAO.selectDriver(driverName);
 					Kart kart = KartDAO.selectKart(driver.getKart());
@@ -1245,8 +1272,8 @@ public class App {
 				String driverName = (String) comboBoxDriverLap.getSelectedItem();
 				String kartId = lblKart.getText();
 				if (driverName == null || kartId == null) {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "You must select driver with assigned kart", "Error",
-							JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "You must select driver with assigned kart",
+							"Error", JOptionPane.ERROR_MESSAGE);
 				} else {
 					try {
 						lapTimer.startLap();
@@ -1312,7 +1339,8 @@ public class App {
 					lap_id = 0;
 					refreshAll();
 				} else {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "No lap selected", "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No lap selected", "Error",
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -1320,7 +1348,7 @@ public class App {
 		lapPanel.add(btnDeleteLap);
 
 		modelDatePickerRace = new UtilDateModel();
-		
+
 		JDatePanelImpl datePanelRace = new JDatePanelImpl(modelDatePickerRace, properties);
 		datePickerRace = new JDatePickerImpl(datePanelRace, new DateLabelFormatter());
 		datePickerRace.setBounds(674, 102, 150, 25);
@@ -1378,12 +1406,14 @@ public class App {
 						date = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 						int laps = parseTextFieldToInt(textFieldRaceLaps);
 						Race race = RaceDAO.selectRace(race_id);
-						RaceDAO.updateRace(race, date, laps);;
+						RaceDAO.updateRace(race, date, laps);
+						;
 						JOptionPane.showMessageDialog(frmKartingdatabase, "Race updated successfully");
 						refreshAll();
 					}
 				} catch (IllegalArgumentException iae) {
-					JOptionPane.showMessageDialog(frmKartingdatabase, iae.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, iae.getMessage(), "Error",
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -1401,38 +1431,39 @@ public class App {
 					textFieldRaceLaps.setText(null);
 					datePickerRace.getModel().setValue(null);
 				} else {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "No race selected", "Error", JOptionPane.ERROR_MESSAGE);				
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No race selected", "Error",
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
 		btnDeleteRace.setBounds(984, 172, 130, 25);
 		racePanel.add(btnDeleteRace);
-		
+
 		JLabel lblRaceId = new JLabel("Race id:");
 		lblRaceId.setBounds(598, 131, 73, 14);
 		raceResultsPanel.add(lblRaceId);
-		
+
 		JLabel lblDriver_2 = new JLabel("Driver:");
 		lblDriver_2.setBounds(795, 131, 73, 14);
 		raceResultsPanel.add(lblDriver_2);
-		
+
 		JLabel lblNewLabel_1 = new JLabel("Position:");
 		lblNewLabel_1.setBounds(968, 131, 73, 14);
 		raceResultsPanel.add(lblNewLabel_1);
-		
+
 		comboBoxRaceResult = new JComboBox();
 		comboBoxRaceResult.setBounds(625, 158, 125, 25);
 		raceResultsPanel.add(comboBoxRaceResult);
-		
+
 		comboBoxDriverResult = new JComboBox();
 		comboBoxDriverResult.setBounds(815, 159, 125, 25);
 		raceResultsPanel.add(comboBoxDriverResult);
-		
+
 		textFieldPosition = new JTextField();
 		textFieldPosition.setBounds(993, 158, 125, 25);
 		raceResultsPanel.add(textFieldPosition);
 		textFieldPosition.setColumns(10);
-		
+
 		JButton btnAddResult = new JButton("Add result");
 		btnAddResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -1444,19 +1475,20 @@ public class App {
 					int position = parseTextFieldToInt(textFieldPosition);
 					if (position == 0) {
 						throw new IllegalArgumentException("You must introduce a valid position");
-					} 
+					}
 					RaceResults rr = new RaceResults(race, driverId, position);
 					RaceResultsDAO.insertRaceResult(rr);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "RaceResult added successfully");
 					refreshAll();
 				} catch (Exception duplicated) {
-					JOptionPane.showMessageDialog(frmKartingdatabase, duplicated.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(frmKartingdatabase, duplicated.getMessage(), "Error",
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
 		btnAddResult.setBounds(726, 235, 115, 25);
 		raceResultsPanel.add(btnAddResult);
-		
+
 		JButton btnDeleteResult = new JButton("Delete result");
 		btnDeleteResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -1468,20 +1500,49 @@ public class App {
 					raceResults_driverId = 0;
 					textFieldPosition.setText(null);
 				} else {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "No race result selected", "Error", JOptionPane.ERROR_MESSAGE);				
+					JOptionPane.showMessageDialog(frmKartingdatabase, "No race result selected", "Error",
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
 		btnDeleteResult.setBounds(897, 235, 115, 23);
 		raceResultsPanel.add(btnDeleteResult);
-		
-		JLabel lblFilterByRace = new JLabel("Filter by race:");
-		lblFilterByRace.setBounds(598, 330, 104, 15);
-		raceResultsPanel.add(lblFilterByRace);
-		
-		JComboBox comboBoxFilterByRace = new JComboBox();
-		comboBoxFilterByRace.setBounds(625, 357, 125, 25);
+
+		chckbxFilterByRace = new JCheckBox("Filter by race:");
+		chckbxFilterByRace.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				refreshRaceResultsTable();
+			}
+		});
+		chckbxFilterByRace.setBounds(625, 330, 152, 15);
+		raceResultsPanel.add(chckbxFilterByRace);
+
+		comboBoxFilterByRace = new JComboBox();
+		comboBoxFilterByRace.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				refreshRaceResultsTable();
+			}
+		});
+		comboBoxFilterByRace.setBounds(659, 357, 125, 25);
 		raceResultsPanel.add(comboBoxFilterByRace);
+
+		chckbxFilterByDriver = new JCheckBox("Filter by driver:");
+		chckbxFilterByDriver.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				refreshRaceResultsTable();
+			}
+		});
+		chckbxFilterByDriver.setBounds(897, 326, 162, 23);
+		raceResultsPanel.add(chckbxFilterByDriver);
+
+		comboBoxFilterByDriver = new JComboBox();
+		comboBoxFilterByDriver.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				refreshRaceResultsTable();
+			}
+		});
+		comboBoxFilterByDriver.setBounds(922, 357, 125, 25);
+		raceResultsPanel.add(comboBoxFilterByDriver);
 
 		refreshAll();
 	}
