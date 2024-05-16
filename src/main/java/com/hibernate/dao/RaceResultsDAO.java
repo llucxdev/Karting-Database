@@ -5,6 +5,7 @@ import java.util.List;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 
 import com.hibernate.model.RaceResults;
@@ -58,18 +59,18 @@ public class RaceResultsDAO {
 	}
 	
 	public static void deleteRaceResult(int race, int driver) {
-		Transaction transaction = null;
-		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			transaction = session.beginTransaction();
-	        Query<RaceResults> query = session.createQuery("DELETE FROM RaceResults WHERE race = :race AND driver = :driver", RaceResults.class);
+	    Transaction transaction = null;
+	    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+	        transaction = session.beginTransaction();
+	        NativeQuery<RaceResults> query = session.createNativeQuery("DELETE FROM race_results WHERE race = :race AND driver = :driver", RaceResults.class);
 	        query.setParameter("race", race);
 	        query.setParameter("driver", driver);
-			query.executeUpdate();
-			transaction.commit();
-		} catch (Exception e) {
-			if (transaction != null) {
-				transaction.rollback();
-			}
-		}
+	        int deletedCount = query.executeUpdate();
+	        transaction.commit();
+	    } catch (Exception e) {
+	        if (transaction != null) {
+	            transaction.rollback();
+	        }
+	    }
 	}
 }
