@@ -18,10 +18,11 @@ import java.util.Properties;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
-import org.hibernate.engine.jdbc.spi.SqlExceptionHelper;
 import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
@@ -63,6 +64,7 @@ import java.sql.Timestamp;
 
 import javax.swing.JComboBox;
 import java.awt.Color;
+import java.awt.Component;
 
 class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
 	private String datePattern = "yyyy-MM-dd";
@@ -90,7 +92,7 @@ public class App {
 
 	// tables variables
 	private DefaultTableModel driverModel;
-	private JTable driversTable;
+	private JTable driverTable;
 
 	private DefaultTableModel teamModel;
 	private JTable teamTable;
@@ -192,6 +194,23 @@ public class App {
 	public App() {
 		initialize();
 	}
+	
+	public void centerTable(JTable table) {
+		DefaultTableCellRenderer centerRender = new DefaultTableCellRenderer();
+		centerRender.setHorizontalAlignment(JLabel.CENTER);
+		for (int i = 0; i < table.getColumnCount(); i++) {
+			table.getColumnModel().getColumn(i).setCellRenderer(centerRender);
+		}
+	}
+	
+	public void centerAllTables() {
+		centerTable(driverTable);
+		centerTable(teamTable);
+		centerTable(kartTable);
+		centerTable(lapTable);
+		centerTable(raceTable);
+		centerTable(raceResultsTable);
+	}
 
 	public void refreshDriverTable() {
 		driverModel.setRowCount(0);
@@ -208,7 +227,7 @@ public class App {
 				row[6] = d.getWins();
 				row[7] = d.getTeam();
 				row[8] = d.getKart();
-				driverModel.addRow(row);
+				driverModel.addRow(row);				
 			});
 	}
 
@@ -330,6 +349,7 @@ public class App {
 	}
 
 	public void refreshRaceResultsTable() {
+		// COMENTAR
 		raceResultsModel.setRowCount(0);
 		int filterByRace = chckbxFilterByRace.isSelected() ? (int) comboBoxFilterByRace.getSelectedItem() : 0;
 		int filterByDriver = chckbxFilterByDriver.isSelected()
@@ -338,13 +358,17 @@ public class App {
 
 		List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResults();
 		if (raceResultsList != null) {
-			raceResultsList.stream().filter(r -> (filterByRace == 0 || r.getRace() == filterByRace)
-					&& (filterByDriver == 0 || r.getDriver() == filterByDriver)).forEach(r -> {
+			raceResultsList.stream()
+							// if chckbxFilter is not selected, no filter is applied
+							// if chckbxFilter is selected, only shows the results with rr equal to the filter
+			.filter(rr -> (filterByRace == 0 || rr.getRace() == filterByRace)
+					&& (filterByDriver == 0 || rr.getDriver() == filterByDriver))
+			.forEach(rr -> {
 						Object[] row = new Object[3];
-						row[0] = r.getRace();
-						Driver d = DriverDAO.selectDriver(r.getDriver());
+						row[0] = rr.getRace();
+						Driver d = DriverDAO.selectDriver(rr.getDriver());
 						row[1] = d.getName();
-						row[2] = r.getPosition();
+						row[2] = rr.getPosition();
 						raceResultsModel.addRow(row);
 					});
 		}
@@ -450,12 +474,28 @@ public class App {
 		driverModel.addColumn("Team");
 		driverModel.addColumn("Kart");
 
-		driversTable = new JTable(driverModel);
-		driversTable.addMouseListener(new MouseAdapter() {
+		driverTable = new JTable(driverModel) {
+			@Override
+		    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+		        Component component = super.prepareRenderer(renderer, row, column);
+		        if (column == 6) { // Column "Wins"
+		            int value = (Integer) getValueAt(row, column);
+		            if (value >= 3) {
+		                component.setBackground(Color.GREEN);
+		            } else {
+		                component.setBackground(Color.WHITE);
+		            }
+		        } else {
+		            component.setBackground(Color.WHITE);
+		        }
+		        return component;
+		    }
+		};
+		driverTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				int i = driversTable.getSelectedRow();
-				TableModel model = driversTable.getModel();
+				int i = driverTable.getSelectedRow();
+				TableModel model = driverTable.getModel();
 				driver_id = (int) model.getValueAt(i, 0);
 				Driver driver = DriverDAO.selectDriver(driver_id);
 				textFieldDriverName.setText(driver.getName());
@@ -483,9 +523,9 @@ public class App {
 				}
 			}
 		});
-		driversTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		driverTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-		JScrollPane scrollPaneDrivers = new JScrollPane(driversTable);
+		JScrollPane scrollPaneDrivers = new JScrollPane(driverTable);
 		scrollPaneDrivers.setBounds(12, 12, 1137, 350);
 		driverPanel.add(scrollPaneDrivers);
 
@@ -1593,7 +1633,13 @@ public class App {
 		});
 		comboBoxFilterByDriver.setBounds(922, 357, 125, 25);
 		raceResultsPanel.add(comboBoxFilterByDriver);
-
+		
+		centerAllTables();
 		refreshAll();
+		
+		/*
+		crear excepciones
+		comentar filtro
+		*/
 	}
 }
