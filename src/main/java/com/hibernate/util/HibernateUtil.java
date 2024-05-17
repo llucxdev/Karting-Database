@@ -12,7 +12,7 @@ import com.hibernate.model.Driver;
 import com.hibernate.model.Kart;
 import com.hibernate.model.Lap;
 import com.hibernate.model.Race;
-import com.hibernate.model.RaceResults;
+import com.hibernate.model.RaceResult;
 import com.hibernate.model.Team;
 
 public class HibernateUtil {
@@ -40,7 +40,7 @@ public class HibernateUtil {
 				configuration.addAnnotatedClass(Kart.class);
 				configuration.addAnnotatedClass(Lap.class);
 				configuration.addAnnotatedClass(Race.class);
-				configuration.addAnnotatedClass(RaceResults.class);
+				configuration.addAnnotatedClass(RaceResult.class);
 
 				ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
 

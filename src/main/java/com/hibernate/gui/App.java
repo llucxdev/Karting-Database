@@ -31,14 +31,14 @@ import com.hibernate.dao.DriverDAO;
 import com.hibernate.dao.KartDAO;
 import com.hibernate.dao.LapDAO;
 import com.hibernate.dao.RaceDAO;
-import com.hibernate.dao.RaceResultsDAO;
+import com.hibernate.dao.RaceResultDAO;
 import com.hibernate.dao.TeamDAO;
 import com.hibernate.model.Driver;
 import com.hibernate.model.Kart;
 import com.hibernate.model.Lap;
 import com.hibernate.model.Race;
 import com.hibernate.model.Team;
-import com.hibernate.model.RaceResults;
+import com.hibernate.model.RaceResult;
 import com.hibernate.util.LapTimer;
 
 import javax.swing.JPanel;
@@ -356,8 +356,8 @@ public class App {
 				? DriverDAO.selectDriver((String) comboBoxFilterByDriver.getSelectedItem()).getDriver_id()
 				: 0;
 
-		List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResults();
-		if (raceResultsList != null) {
+		List<RaceResult> raceResultsList = RaceResultDAO.selectAllRaceResults();
+		if (!raceResultsList.isEmpty()) {
 			raceResultsList.stream()
 							// if chckbxFilter is not selected, no filter is applied
 							// if chckbxFilter is selected, only shows the results with rr equal to the filter
@@ -896,7 +896,7 @@ public class App {
 					JOptionPane.showMessageDialog(frmKartingdatabase, "No driver selected", "Error",
 							JOptionPane.ERROR_MESSAGE);
 				} else {
-					List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResultsByDriver(driver_id);
+					List<RaceResult> raceResultsList = RaceResultDAO.selectAllRaceResultsByDriver(driver_id);
 					if (!raceResultsList.isEmpty()) {
 						JOptionPane.showMessageDialog(frmKartingdatabase,
 								"Driver cannot be removed: race results are associated with the driver", "Error",
@@ -1493,7 +1493,7 @@ public class App {
 		btnDeleteRace.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (race_id != 0) {
-					List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResultsByRace(race_id);
+					List<RaceResult> raceResultsList = RaceResultDAO.selectAllRaceResultsByRace(race_id);
 					if (!raceResultsList.isEmpty()) {
 						JOptionPane.showMessageDialog(frmKartingdatabase,
 								"Race cannot be removed: race results are associated with the race", "Error",
@@ -1553,14 +1553,14 @@ public class App {
 						throw new IllegalArgumentException("You must introduce a valid position");
 					}
 					Race race = RaceDAO.selectRace(raceId);
-					RaceResults rr = RaceResultsDAO.selectRaceResultByPosition(raceId, position);
+					RaceResult rr = RaceResultDAO.selectRaceResultByPosition(raceId, position);
 					if (rr != null) {
 						if (rr.getPosition() == position) {
 							throw new Exception("This position in this race is occupied");
 						}
 					}
-					rr = new RaceResults(raceId, driverId, position);
-					RaceResultsDAO.insertRaceResult(rr);
+					rr = new RaceResult(raceId, driverId, position);
+					RaceResultDAO.insertRaceResult(rr);
 					DriverDAO.updateDriverRace(driver, race.getLaps(), position);
 					refreshRaceResultsTable();
 					refreshDriverTable();
@@ -1581,7 +1581,7 @@ public class App {
 					Race race = RaceDAO.selectRace(raceResults_raceId);
 					Driver driver = DriverDAO.selectDriver(raceResults_driverId);
 					DriverDAO.updateDriverRemoveRace(driver, race.getLaps(), raceResults_position);
-					RaceResultsDAO.deleteRaceResult(raceResults_raceId, raceResults_driverId);
+					RaceResultDAO.deleteRaceResult(raceResults_raceId, raceResults_driverId);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Result deleted successfully");
 					refreshRaceResultsTable();
 					refreshDriverTable();
