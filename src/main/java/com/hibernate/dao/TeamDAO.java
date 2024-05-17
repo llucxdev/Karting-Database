@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.query.Query;
 
 import com.hibernate.model.Driver;
@@ -74,7 +75,7 @@ public class TeamDAO {
 		}
 	}
 
-	public static void updateTeam(Team team, String name, Blob img) {
+	public static void updateTeam(Team team, String name, Blob img) throws Exception {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
@@ -82,6 +83,12 @@ public class TeamDAO {
 			team.setImg(img);
 			session.merge(team);
 			transaction.commit();
+		} catch (ConstraintViolationException e) {
+	        if (e.getConstraintName().contains("name")) {
+	            throw new Exception("Duplicate entry", e);
+	        } else {
+	            throw new Exception("Error updating driver", e);
+	        }
 		} catch (Exception e) {
 			if (transaction != null) {
 				transaction.rollback();

@@ -13,19 +13,40 @@ import com.hibernate.util.HibernateUtil;
 
 public class RaceResultsDAO {
 	
-	public static RaceResults selectRaceResult(int id) {
-		Transaction transaction = null;
-		RaceResults raceResults = null;
-		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			transaction = session.beginTransaction();
-			raceResults = session.get(RaceResults.class, id);
-			transaction.commit();
-		} catch (Exception e) {
-			if (transaction != null) {
-				transaction.rollback();
-			}
-		}
-		return raceResults;
+	public static RaceResults selectRaceResult(int raceId, int driverId) {
+	    Transaction transaction = null;
+	    RaceResults raceResults = null;
+	    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+	        transaction = session.beginTransaction();
+	        Query<RaceResults> query = session.createQuery("FROM RaceResults WHERE race = :race AND driver = :driver", RaceResults.class);
+	        query.setParameter("race", raceId);
+	        query.setParameter("driver", driverId);
+	        raceResults = query.uniqueResult();
+	        transaction.commit();
+	    } catch (Exception e) {
+	        if (transaction != null) {
+	            transaction.rollback();
+	        }
+	    }
+	    return raceResults;
+	}
+	
+	public static RaceResults selectRaceResultByPosition(int raceId, int position) {
+	    Transaction transaction = null;
+	    RaceResults raceResults = null;
+	    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+	        transaction = session.beginTransaction();
+	        Query<RaceResults> query = session.createQuery("FROM RaceResults WHERE race = :race AND position = :position", RaceResults.class);
+	        query.setParameter("race", raceId);
+	        query.setParameter("position", position);
+	        raceResults = query.uniqueResult();
+	        transaction.commit();
+	    } catch (Exception e) {
+	        if (transaction != null) {
+	            transaction.rollback();
+	        }
+	    }
+	    return raceResults;
 	}
 	
 	public static List<RaceResults> selectAllRaceResults() {
@@ -98,13 +119,13 @@ public class RaceResultsDAO {
 	    }
 	}
 	
-	public static void deleteRaceResult(int race, int driver) {
+	public static void deleteRaceResult(int raceId, int driverId) {
 	    Transaction transaction = null;
 	    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 	        transaction = session.beginTransaction();
 	        NativeQuery<RaceResults> query = session.createNativeQuery("DELETE FROM race_results WHERE race = :race AND driver = :driver", RaceResults.class);
-	        query.setParameter("race", race);
-	        query.setParameter("driver", driver);
+	        query.setParameter("race", raceId);
+	        query.setParameter("driver", driverId);
 	        int deletedCount = query.executeUpdate();
 	        transaction.commit();
 	    } catch (Exception e) {

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.query.Query;
 
 import com.hibernate.model.Driver;
@@ -175,7 +176,7 @@ public class DriverDAO {
 	}
 	
 	public static void updateDriver(Driver driver, String name, LocalDate dob, int age, int laps, int races,
-			int podiums, int wins, Blob img) {
+			int podiums, int wins, Blob img) throws Exception {
 		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			transaction = session.beginTransaction();
@@ -189,6 +190,12 @@ public class DriverDAO {
 			driver.setImg(img);
 			session.merge(driver);
 			transaction.commit();
+		} catch (ConstraintViolationException e) {
+	        if (e.getConstraintName().contains("name")) {
+	            throw new Exception("Duplicate entry", e);
+	        } else {
+	            throw new Exception("Error updating driver", e);
+	        }
 		} catch (Exception e) {
 			if (transaction != null) {
 				transaction.rollback();
@@ -231,6 +238,66 @@ public class DriverDAO {
 			int currentLaps = driver.getLaps();
 			currentLaps++;
 			driver.setLaps(currentLaps);
+			session.merge(driver);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
+	
+	public static void updateDriverRace(Driver driver, int laps, int position) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			int currentLaps = driver.getLaps();
+			currentLaps += laps;
+			driver.setLaps(currentLaps);
+			int currentRaces = driver.getRaces();
+			currentRaces++;
+			driver.setRaces(currentRaces);
+			System.out.println(position);
+			if (position <= 3) {
+				int currentPodiums = driver.getPodiums();
+				currentPodiums++;
+				driver.setPodiums(currentPodiums);
+				if (position == 1) {
+					int currentWins = driver.getWins();
+					currentWins++;
+					driver.setWins(currentWins);
+				}
+			}
+			session.merge(driver);
+			transaction.commit();
+		} catch (Exception e) {
+			if (transaction != null) {
+				transaction.rollback();
+			}
+		}
+	}
+	
+	public static void updateDriverRemoveRace(Driver driver, int laps, int position) {
+		Transaction transaction = null;
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			transaction = session.beginTransaction();
+			int currentLaps = driver.getLaps();
+			currentLaps -= laps;
+			driver.setLaps(currentLaps);
+			int currentRaces = driver.getRaces();
+			currentRaces--;
+			driver.setRaces(currentRaces);
+			System.out.println(position);
+			if (position <= 3) {
+				int currentPodiums = driver.getPodiums();
+				currentPodiums--;
+				driver.setPodiums(currentPodiums);
+				if (position == 1) {
+					int currentWins = driver.getWins();
+					currentWins--;
+					driver.setWins(currentWins);
+				}
+			}
 			session.merge(driver);
 			transaction.commit();
 		} catch (Exception e) {

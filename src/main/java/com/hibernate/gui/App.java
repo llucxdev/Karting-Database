@@ -164,6 +164,7 @@ public class App {
 	private int race_id = 0;
 	private int raceResults_raceId = 0;
 	private int raceResults_driverId = 0;
+	private int raceResults_position = 0;
 
 	// LapTimer util
 	private LapTimer lapTimer = new LapTimer();
@@ -329,23 +330,24 @@ public class App {
 	}
 
 	public void refreshRaceResultsTable() {
-	    raceResultsModel.setRowCount(0);
-	    int filterByRace = chckbxFilterByRace.isSelected() ? (int) comboBoxFilterByRace.getSelectedItem() : 0;
-	    int filterByDriver = chckbxFilterByDriver.isSelected() ? DriverDAO.selectDriver((String) comboBoxFilterByDriver.getSelectedItem()).getDriver_id() : 0;
-	    
-	    List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResults();
-	    if (raceResultsList != null) {
-	        raceResultsList.stream()
-	            .filter(r -> (filterByRace == 0 || r.getRace() == filterByRace) && (filterByDriver == 0 || r.getDriver() == filterByDriver))
-	            .forEach(r -> {
-	                Object[] row = new Object[3];
-	                row[0] = r.getRace();
-	                Driver d = DriverDAO.selectDriver(r.getDriver());
-	                row[1] = d.getName();
-	                row[2] = r.getPosition();
-	                raceResultsModel.addRow(row);
-	            });
-	    }
+		raceResultsModel.setRowCount(0);
+		int filterByRace = chckbxFilterByRace.isSelected() ? (int) comboBoxFilterByRace.getSelectedItem() : 0;
+		int filterByDriver = chckbxFilterByDriver.isSelected()
+				? DriverDAO.selectDriver((String) comboBoxFilterByDriver.getSelectedItem()).getDriver_id()
+				: 0;
+
+		List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResults();
+		if (raceResultsList != null) {
+			raceResultsList.stream().filter(r -> (filterByRace == 0 || r.getRace() == filterByRace)
+					&& (filterByDriver == 0 || r.getDriver() == filterByDriver)).forEach(r -> {
+						Object[] row = new Object[3];
+						row[0] = r.getRace();
+						Driver d = DriverDAO.selectDriver(r.getDriver());
+						row[1] = d.getName();
+						row[2] = r.getPosition();
+						raceResultsModel.addRow(row);
+					});
+		}
 	}
 
 	public void refreshComboBoxRaceResults() {
@@ -400,6 +402,7 @@ public class App {
 		frmKartingdatabase.setBounds(100, 100, 1200, 850);
 		frmKartingdatabase.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmKartingdatabase.getContentPane().setLayout(null);
+		frmKartingdatabase.setIconImage(new ImageIcon(getClass().getResource("")).getImage());
 
 		// tabbed pane with different panels
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -632,6 +635,7 @@ public class App {
 				raceResults_raceId = (int) raceResultsTable.getModel().getValueAt(i, 0);
 				Driver driver = DriverDAO.selectDriver((String) raceResultsTable.getModel().getValueAt(i, 1));
 				raceResults_driverId = (int) driver.getDriver_id();
+				raceResults_position = (int) raceResultsTable.getModel().getValueAt(i, 2);
 			}
 		});
 		raceResultsTable.setLayout(null);
@@ -754,6 +758,9 @@ public class App {
 						dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 						LocalDate today = LocalDate.now();
 						age = Period.between(dob, today).getYears();
+						if (age < 6){
+							throw new IllegalArgumentException("Only over 6 years old allowed");
+						}
 					} else {
 						throw new IllegalArgumentException("Birth can't be empty");
 					}
@@ -805,6 +812,9 @@ public class App {
 							dob = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 							LocalDate today = LocalDate.now();
 							age = Period.between(dob, today).getYears();
+							if (age < 6){
+								throw new IllegalArgumentException("Only over 6 years old allowed");
+							}
 						} else {
 							throw new IllegalArgumentException("Birth cannot be empty");
 						}
@@ -829,6 +839,9 @@ public class App {
 					} catch (IllegalArgumentException iae) {
 						JOptionPane.showMessageDialog(frmKartingdatabase, iae.getMessage(), "Error",
 								JOptionPane.ERROR_MESSAGE);
+					} catch (Exception e1) {
+						JOptionPane.showMessageDialog(frmKartingdatabase, e1.getMessage(), "Error",
+								JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -844,8 +857,10 @@ public class App {
 							JOptionPane.ERROR_MESSAGE);
 				} else {
 					List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResultsByDriver(driver_id);
-					if (raceResultsList != null) {
-						JOptionPane.showMessageDialog(frmKartingdatabase, "Driver cannot be removed: race results are associated with the driver", "Error", JOptionPane.ERROR_MESSAGE);
+					if (!raceResultsList.isEmpty()) {
+						JOptionPane.showMessageDialog(frmKartingdatabase,
+								"Driver cannot be removed: race results are associated with the driver", "Error",
+								JOptionPane.ERROR_MESSAGE);
 					} else {
 						Driver driver = DriverDAO.selectDriver(driver_id);
 						Team team = TeamDAO.selectTeam(driver.getTeam());
@@ -974,32 +989,39 @@ public class App {
 		JButton btnUpdateTeam = new JButton("Upd");
 		btnUpdateTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (team_id == 0) {
-					JOptionPane.showMessageDialog(frmKartingdatabase, "No team selected", "Error",
-							JOptionPane.ERROR_MESSAGE);
-				} else {
-					Team team = TeamDAO.selectTeam(team_id);
-					String name = textFieldTeamName.getText();
-					if (name.isEmpty()) {
-						throw new IllegalArgumentException("Name cannot be empty");
-					} else if (TeamDAO.selectTeam(name) != null && TeamDAO.selectTeam(name).getName().equals(name)) {
-						throw new IllegalArgumentException("Duplicated name");
-					}
-					Blob img = null;
-					if (!textFieldTeamImageText.getText().isEmpty()) {
-						try {
-							String imagePath = textFieldTeamImageText.getText();
-							byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
-							img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
-						} catch (Exception imgException) {
-							JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
-									JOptionPane.ERROR_MESSAGE);
+				try {
+					if (team_id == 0) {
+						JOptionPane.showMessageDialog(frmKartingdatabase, "No team selected", "Error",
+								JOptionPane.ERROR_MESSAGE);
+					} else {
+						Team team = TeamDAO.selectTeam(team_id);
+						String name = textFieldTeamName.getText();
+						if (name.isEmpty()) {
+							throw new IllegalArgumentException("Name cannot be empty");
+						} 
+						Blob img = null;
+						if (!textFieldTeamImageText.getText().isEmpty()) {
+							try {
+								String imagePath = textFieldTeamImageText.getText();
+								byte[] imageBytes = Files.readAllBytes(Paths.get(imagePath));
+								img = new com.mysql.cj.jdbc.Blob(imageBytes, null);
+							} catch (Exception imgException) {
+								JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
+										JOptionPane.ERROR_MESSAGE);
+							}
 						}
+						TeamDAO.updateTeam(team, name, img);
+						JOptionPane.showMessageDialog(frmKartingdatabase, "Team updated successfully");
+						lblTeamImg.setIcon(null);
+						refreshAll();
 					}
-					TeamDAO.updateTeam(team, name, img);
-					JOptionPane.showMessageDialog(frmKartingdatabase, "Team updated successfully");
-					lblTeamImg.setIcon(null);
-					refreshAll();
+
+				} catch (IllegalArgumentException iae) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, iae.getMessage(), "Error",
+							JOptionPane.ERROR_MESSAGE);
+				} catch (Exception e) {
+					JOptionPane.showMessageDialog(frmKartingdatabase, e.getMessage(), "Error",
+							JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		});
@@ -1121,8 +1143,8 @@ public class App {
 			public void actionPerformed(ActionEvent arg0) {
 				Kart kart = new Kart(true);
 				KartDAO.insertKart(kart);
-				JOptionPane.showMessageDialog(frmKartingdatabase, "Kart added successfully");
 				refreshAll();
+				JOptionPane.showMessageDialog(frmKartingdatabase, "Kart added successfully");
 			}
 		});
 		btnAddKart.setBounds(64, 465, 117, 25);
@@ -1136,7 +1158,9 @@ public class App {
 							JOptionPane.ERROR_MESSAGE);
 				} else {
 					Driver driver = DriverDAO.selectDriverByKart(kart_id);
-					DriverDAO.updateDriverKart(driver, 0);
+					if (driver != null) {
+						DriverDAO.updateDriverKart(driver, 0);
+					}
 					KartDAO.deleteKart(kart_id);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Kart removed successfully");
 					refreshAll();
@@ -1430,8 +1454,10 @@ public class App {
 			public void actionPerformed(ActionEvent arg0) {
 				if (race_id != 0) {
 					List<RaceResults> raceResultsList = RaceResultsDAO.selectAllRaceResultsByRace(race_id);
-					if (raceResultsList != null) {
-						JOptionPane.showMessageDialog(frmKartingdatabase, "Race cannot be removed: race results are associated with the race", "Error", JOptionPane.ERROR_MESSAGE);
+					if (!raceResultsList.isEmpty()) {
+						JOptionPane.showMessageDialog(frmKartingdatabase,
+								"Race cannot be removed: race results are associated with the race", "Error",
+								JOptionPane.ERROR_MESSAGE);
 					} else {
 						RaceDAO.deleteRace(race_id);
 						JOptionPane.showMessageDialog(frmKartingdatabase, "Race deleted successfully");
@@ -1478,7 +1504,7 @@ public class App {
 		btnAddResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					int race = (int) comboBoxRaceResult.getSelectedItem();
+					int raceId = (int) comboBoxRaceResult.getSelectedItem();
 					String driverName = (String) comboBoxDriverResult.getSelectedItem();
 					Driver driver = DriverDAO.selectDriver(driverName);
 					int driverId = driver.getDriver_id();
@@ -1486,10 +1512,19 @@ public class App {
 					if (position == 0) {
 						throw new IllegalArgumentException("You must introduce a valid position");
 					}
-					RaceResults rr = new RaceResults(race, driverId, position);
+					Race race = RaceDAO.selectRace(raceId);
+					RaceResults rr = RaceResultsDAO.selectRaceResultByPosition(raceId, position);
+					if (rr != null) {
+						if (rr.getPosition() == position) {
+							throw new Exception("This position in this race is occupied");
+						}
+					}
+					rr = new RaceResults(raceId, driverId, position);
 					RaceResultsDAO.insertRaceResult(rr);
-					JOptionPane.showMessageDialog(frmKartingdatabase, "RaceResult added successfully");
+					DriverDAO.updateDriverRace(driver, race.getLaps(), position);
 					refreshRaceResultsTable();
+					refreshDriverTable();
+					JOptionPane.showMessageDialog(frmKartingdatabase, "RaceResult added successfully");
 				} catch (Exception duplicated) {
 					JOptionPane.showMessageDialog(frmKartingdatabase, duplicated.getMessage(), "Error",
 							JOptionPane.ERROR_MESSAGE);
@@ -1503,11 +1538,16 @@ public class App {
 		btnDeleteResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (raceResults_raceId != 0 || raceResults_driverId != 0) {
+					Race race = RaceDAO.selectRace(raceResults_raceId);
+					Driver driver = DriverDAO.selectDriver(raceResults_driverId);
+					DriverDAO.updateDriverRemoveRace(driver, race.getLaps(), raceResults_position);
 					RaceResultsDAO.deleteRaceResult(raceResults_raceId, raceResults_driverId);
 					JOptionPane.showMessageDialog(frmKartingdatabase, "Result deleted successfully");
 					refreshRaceResultsTable();
+					refreshDriverTable();
 					raceResults_raceId = 0;
 					raceResults_driverId = 0;
+					raceResults_position = 0;
 					textFieldPosition.setText(null);
 				} else {
 					JOptionPane.showMessageDialog(frmKartingdatabase, "No race result selected", "Error",
