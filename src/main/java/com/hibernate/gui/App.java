@@ -402,7 +402,7 @@ public class App {
 		frmKartingdatabase.setBounds(100, 100, 1200, 850);
 		frmKartingdatabase.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmKartingdatabase.getContentPane().setLayout(null);
-		frmKartingdatabase.setIconImage(new ImageIcon(getClass().getResource("")).getImage());
+		frmKartingdatabase.setIconImage(new ImageIcon(getClass().getClassLoader().getResource("images/icon.jpeg")).getImage());
 
 		// tabbed pane with different panels
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
