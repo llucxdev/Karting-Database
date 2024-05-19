@@ -349,7 +349,6 @@ public class App {
 	}
 
 	public void refreshRaceResultsTable() {
-		// COMENTAR
 		raceResultsModel.setRowCount(0);
 		int filterByRace = chckbxFilterByRace.isSelected() ? (int) comboBoxFilterByRace.getSelectedItem() : 0;
 		int filterByDriver = chckbxFilterByDriver.isSelected()
@@ -359,8 +358,8 @@ public class App {
 		List<RaceResult> raceResultsList = RaceResultDAO.selectAllRaceResults();
 		if (!raceResultsList.isEmpty()) {
 			raceResultsList.stream()
-							// if chckbxFilter is not selected, no filter is applied
-							// if chckbxFilter is selected, only shows the results with rr equal to the filter
+					// if chckbxFilter is not selected, no filter is applied because the first validaiton is true
+					// if chckbxFilter is selected, only shows the results with rr equal to the filter because the first validation is false and the second true
 			.filter(rr -> (filterByRace == 0 || rr.getRace() == filterByRace)
 					&& (filterByDriver == 0 || rr.getDriver() == filterByDriver))
 			.forEach(rr -> {
@@ -1636,10 +1635,5 @@ public class App {
 		
 		centerAllTables();
 		refreshAll();
-		
-		/*
-		crear excepciones
-		comentar filtro
-		*/
 	}
 }
