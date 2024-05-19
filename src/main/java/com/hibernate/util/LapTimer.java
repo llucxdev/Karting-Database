@@ -2,7 +2,6 @@ package com.hibernate.util;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.sql.Timestamp;
 
 public class LapTimer {
