@@ -1,6 +1,7 @@
 package com.hibernate.gui;
 
 import java.awt.EventQueue;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -33,6 +34,7 @@ import com.hibernate.dao.LapDAO;
 import com.hibernate.dao.RaceDAO;
 import com.hibernate.dao.RaceResultDAO;
 import com.hibernate.dao.TeamDAO;
+import com.hibernate.exception.RaceResultException;
 import com.hibernate.model.Driver;
 import com.hibernate.model.Kart;
 import com.hibernate.model.Lap;
@@ -63,6 +65,8 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 import javax.swing.JComboBox;
+
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 
@@ -431,10 +435,17 @@ public class App {
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setBounds(12, 12, 1166, 782);
 		frmKartingdatabase.getContentPane().add(tabbedPane);
+		
+		JLabel wallpaper = new JLabel();
+		Image wallpaperImg = new ImageIcon(getClass().getResource("images/wallpaper.jpg")).getImage();
+		wallpaperImg.getScaledInstance(tabbedPane.getWidth(), tabbedPane.getHeight(), Image.SCALE_SMOOTH);
+		ImageIcon resizedImage = new ImageIcon(wallpaperImg);
+		wallpaper.setIcon(resizedImage);
 
 		JPanel driverPanel = new JPanel();
 		tabbedPane.addTab("Drivers", null, driverPanel, null);
-		driverPanel.setLayout(null);
+		driverPanel.setLayout(null);	
+		driverPanel.add(wallpaper);
 
 		JPanel teamPanel = new JPanel();
 		tabbedPane.addTab("Teams", null, teamPanel, null);
@@ -1380,7 +1391,6 @@ public class App {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
 					Timestamp lapTime = lapTimer.finishLap();
-					System.out.println(lapTime);
 					lblOnLap.setText("Last lap");
 					lapTimerThread.interrupt();
 					comboBoxDriverLap.setEnabled(true);
@@ -1555,7 +1565,7 @@ public class App {
 					RaceResult rr = RaceResultDAO.selectRaceResultByPosition(raceId, position);
 					if (rr != null) {
 						if (rr.getPosition() == position) {
-							throw new Exception("This position in this race is occupied");
+							throw new RaceResultException("This position in this race is occupied");
 						}
 					}
 					rr = new RaceResult(raceId, driverId, position);

@@ -257,7 +257,6 @@ public class DriverDAO {
 			int currentRaces = driver.getRaces();
 			currentRaces++;
 			driver.setRaces(currentRaces);
-			System.out.println(position);
 			if (position <= 3) {
 				int currentPodiums = driver.getPodiums();
 				currentPodiums++;
@@ -287,7 +286,6 @@ public class DriverDAO {
 			int currentRaces = driver.getRaces();
 			currentRaces--;
 			driver.setRaces(currentRaces);
-			System.out.println(position);
 			if (position <= 3) {
 				int currentPodiums = driver.getPodiums();
 				currentPodiums--;

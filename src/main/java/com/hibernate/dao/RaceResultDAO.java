@@ -132,7 +132,7 @@ public class RaceResultDAO {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            NativeQuery<RaceResult> query = session.createNativeQuery("DELETE FROM race_results WHERE race = :race AND driver = :driver", RaceResult.class);
+            NativeQuery<RaceResult> query = session.createNativeQuery("DELETE FROM race_result WHERE race = :race AND driver = :driver", RaceResult.class);
             query.setParameter("race", raceId);
             query.setParameter("driver", driverId);
             query.executeUpdate();
