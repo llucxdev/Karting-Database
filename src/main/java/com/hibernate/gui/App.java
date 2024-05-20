@@ -1,7 +1,6 @@
 package com.hibernate.gui;
 
 import java.awt.EventQueue;
-import java.awt.Graphics;
 import java.awt.Image;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -66,7 +65,6 @@ import java.sql.Timestamp;
 
 import javax.swing.JComboBox;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 
@@ -437,16 +435,16 @@ public class App {
 		frmKartingdatabase.getContentPane().add(tabbedPane);
 		
 		JLabel wallpaper = new JLabel();
-		Image wallpaperImg = new ImageIcon(getClass().getResource("images/wallpaper.jpg")).getImage();
-		wallpaperImg.getScaledInstance(tabbedPane.getWidth(), tabbedPane.getHeight(), Image.SCALE_SMOOTH);
+		wallpaper.setBounds(0, 0, 1161, 755);
+		Image wallpaperImg = new ImageIcon(getClass().getClassLoader().getResource("images/wallpaper.png")).getImage();
 		ImageIcon resizedImage = new ImageIcon(wallpaperImg);
 		wallpaper.setIcon(resizedImage);
 
 		JPanel driverPanel = new JPanel();
 		tabbedPane.addTab("Drivers", null, driverPanel, null);
-		driverPanel.setLayout(null);	
+		driverPanel.setLayout(null);
 		driverPanel.add(wallpaper);
-
+		
 		JPanel teamPanel = new JPanel();
 		tabbedPane.addTab("Teams", null, teamPanel, null);
 		teamPanel.setLayout(null);
