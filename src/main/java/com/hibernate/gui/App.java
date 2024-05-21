@@ -1,6 +1,7 @@
 package com.hibernate.gui;
 
 import java.awt.EventQueue;
+import java.awt.FocusTraversalPolicy;
 import java.awt.Image;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -68,6 +69,7 @@ import javax.swing.JComboBox;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 
 class DateLabelFormatter extends JFormattedTextField.AbstractFormatter {
 	private String datePattern = "yyyy-MM-dd";
@@ -446,6 +448,7 @@ public class App {
 		FlatLightLaf.setup();
 		
 		frmKartingdatabase = new JFrame();
+		frmKartingdatabase.setResizable(false);
 		frmKartingdatabase.setTitle("Karting Database");
 		frmKartingdatabase.setBounds(100, 100, 1200, 850);
 		frmKartingdatabase.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -810,7 +813,6 @@ public class App {
 		textFieldDriverName.setToolTipText("Name for the driver");
 		textFieldDriverName.setBounds(163, 425, 150, 25);
 		driverPanel.add(textFieldDriverName);
-		textFieldDriverName.setColumns(10);
 
 		textFieldLaps = new JTextField();
 		textFieldLaps.setToolTipText("Laps completed by the driver");
