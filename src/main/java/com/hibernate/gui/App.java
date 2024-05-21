@@ -416,7 +416,7 @@ public class App {
 		refreshComboBoxRaceResults();
 	}
 
-	private int parseTextFieldToInt(JTextField textField) {
+	public int parseTextFieldToInt(JTextField textField) {
 		String text = textField.getText();
 		if (!text.isEmpty() && text.matches("\\d+")) {
 			return Integer.parseInt(text);
