@@ -27,6 +27,7 @@ import org.jdatepicker.impl.JDatePanelImpl;
 import org.jdatepicker.impl.JDatePickerImpl;
 import org.jdatepicker.impl.UtilDateModel;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import com.hibernate.dao.DriverDAO;
 import com.hibernate.dao.KartDAO;
 import com.hibernate.dao.LapDAO;
@@ -91,7 +92,15 @@ public class App {
 
 	// swing variables
 	private JFrame frmKartingdatabase;
-
+	private JTabbedPane tabbedPane;
+	private JPanel[] panels = new JPanel[6];
+	private JPanel driverPanel;
+	private JPanel teamPanel;
+	private JPanel kartPanel;
+	private JPanel lapPanel;
+	private JPanel racePanel;
+	private JPanel raceResultsPanel;
+	
 	// tables variables
 	private DefaultTableModel driverModel;
 	private JTable driverTable;
@@ -417,11 +426,25 @@ public class App {
 			throw new IllegalArgumentException("Only numbers supported");
 		}
 	}
+	
+	private void paintWallpaper(JPanel[] panel) {
+		for (int i = 0; i < panel.length; i++ ) {
+			Image wallpaperImg = new ImageIcon(getClass().getClassLoader().getResource("images/wallpaper.png")).getImage();
+			ImageIcon resizedImage = new ImageIcon(wallpaperImg);
+			JLabel wallpaper = new JLabel();
+			wallpaper.setOpaque(false);
+			wallpaper.setBounds(0, 0, 1161, 755);
+			wallpaper.setIcon(resizedImage);
+			panel[i].add(wallpaper);
+		}
+	}
 
 	/**
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
+		FlatLightLaf.setup();
+		
 		frmKartingdatabase = new JFrame();
 		frmKartingdatabase.setTitle("Karting Database");
 		frmKartingdatabase.setBounds(100, 100, 1200, 850);
@@ -430,37 +453,30 @@ public class App {
 		frmKartingdatabase.setIconImage(new ImageIcon(getClass().getClassLoader().getResource("images/icon.jpeg")).getImage());
 
 		// tabbed pane with different panels
-		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 		tabbedPane.setBounds(12, 12, 1166, 782);
 		frmKartingdatabase.getContentPane().add(tabbedPane);
-		
-		JLabel wallpaper = new JLabel();
-		wallpaper.setBounds(0, 0, 1161, 755);
-		Image wallpaperImg = new ImageIcon(getClass().getClassLoader().getResource("images/wallpaper.png")).getImage();
-		ImageIcon resizedImage = new ImageIcon(wallpaperImg);
-		wallpaper.setIcon(resizedImage);
 
-		JPanel driverPanel = new JPanel();
+		driverPanel = new JPanel();
 		tabbedPane.addTab("Drivers", null, driverPanel, null);
 		driverPanel.setLayout(null);
-		driverPanel.add(wallpaper);
 		
-		JPanel teamPanel = new JPanel();
+		teamPanel = new JPanel();
 		tabbedPane.addTab("Teams", null, teamPanel, null);
 		teamPanel.setLayout(null);
 
-		JPanel kartPanel = new JPanel();
+		kartPanel = new JPanel();
 		tabbedPane.addTab("Karts", null, kartPanel, null);
 
-		JPanel lapPanel = new JPanel();
+		lapPanel = new JPanel();
 		tabbedPane.addTab("Laps", null, lapPanel, null);
 		lapPanel.setLayout(null);
 
-		JPanel racePanel = new JPanel();
+		racePanel = new JPanel();
 		tabbedPane.addTab("Race", null, racePanel, null);
 		racePanel.setLayout(null);
 
-		JPanel raceResultsPanel = new JPanel();
+		raceResultsPanel = new JPanel();
 		tabbedPane.addTab("Race results", null, raceResultsPanel, null);
 		raceResultsPanel.setLayout(null);
 
@@ -483,22 +499,30 @@ public class App {
 		driverModel.addColumn("Kart");
 
 		driverTable = new JTable(driverModel) {
-			@Override
+		    @Override
 		    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
 		        Component component = super.prepareRenderer(renderer, row, column);
+		        boolean isSelected = isRowSelected(row);
 		        if (column == 6) { // Column "Wins"
 		            int value = (Integer) getValueAt(row, column);
-		            if (value >= 3) {
+		            if (value >= 3 && !isSelected) {
 		                component.setBackground(Color.GREEN);
-		            } else {
+		            } else if (!isSelected) {
 		                component.setBackground(Color.WHITE);
 		            }
 		        } else {
-		            component.setBackground(Color.WHITE);
+		            if (isSelected) {
+		                component.setBackground(getSelectionBackground());
+		                component.setForeground(getSelectionForeground());
+		            } else {
+		                component.setBackground(Color.WHITE);
+		                component.setForeground(Color.BLACK);
+		            }
 		        }
 		        return component;
 		    }
 		};
+
 		driverTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -619,7 +643,34 @@ public class App {
 		lapModel.addColumn("Time");
 		lapModel.addColumn("Date");
 
-		lapTable = new JTable(lapModel);
+		lapTable = new JTable(lapModel) {
+		    @Override
+		    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+		        Component component = super.prepareRenderer(renderer, row, column);
+		        boolean isSelected = isRowSelected(row);
+		        int minRowIndex = -1;
+		        String minValue = null;
+		        for (int i = 0; i < getRowCount(); i++) {
+		            StringBuilder sb = (StringBuilder) getValueAt(i, 3);
+		            String value = sb.toString();
+		            if (minValue == null || value.compareTo(minValue) < 0) {
+		                minValue = value;
+		                minRowIndex = i;
+		            }
+		        }
+		        if (row == minRowIndex && !isSelected) {
+		            component.setBackground(Color.MAGENTA);
+		        } else if (isSelected) {
+		        	 component.setBackground(getSelectionBackground());
+		             component.setForeground(getSelectionForeground());
+		        } else {
+		            component.setBackground(Color.WHITE);
+		            component.setForeground(Color.BLACK);
+		        }
+		        return component;
+		    }
+		};
+
 		lapTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -692,18 +743,26 @@ public class App {
 		JScrollPane scrollPaneRaceResults = new JScrollPane(raceResultsTable);
 		scrollPaneRaceResults.setBounds(12, 12, 562, 731);
 		raceResultsPanel.add(scrollPaneRaceResults);
+		
+		panels[0] = driverPanel;
+		panels[1] = teamPanel;
+		panels[2] = kartPanel;
+		panels[3] = lapPanel;
+		panels[4] = racePanel;
+		panels[5] = raceResultsPanel;
 
 		JLabel lblTeamName = new JLabel("Team name:");
 		lblTeamName.setBounds(12, 498, 101, 15);
 		teamPanel.add(lblTeamName);
 
 		textFieldTeamName = new JTextField();
+		textFieldTeamName.setToolTipText("Team name");
 		textFieldTeamName.setBounds(131, 493, 150, 25);
 		teamPanel.add(textFieldTeamName);
 		textFieldTeamName.setColumns(10);
 
 		JLabel lblImage_1 = new JLabel("Select Image:");
-		lblImage_1.setBounds(12, 535, 101, 14);
+		lblImage_1.setBounds(12, 535, 101, 18);
 		teamPanel.add(lblImage_1);
 
 		textFieldTeamImageText = new JTextField();
@@ -748,26 +807,31 @@ public class App {
 		driverPanel.add(datePickerDriver);
 
 		textFieldDriverName = new JTextField();
+		textFieldDriverName.setToolTipText("Name for the driver");
 		textFieldDriverName.setBounds(163, 425, 150, 25);
 		driverPanel.add(textFieldDriverName);
 		textFieldDriverName.setColumns(10);
 
 		textFieldLaps = new JTextField();
+		textFieldLaps.setToolTipText("Laps completed by the driver");
 		textFieldLaps.setColumns(10);
 		textFieldLaps.setBounds(163, 473, 150, 25);
 		driverPanel.add(textFieldLaps);
 
 		textFieldRaces = new JTextField();
+		textFieldRaces.setToolTipText("Races completed by the driver");
 		textFieldRaces.setColumns(10);
 		textFieldRaces.setBounds(163, 520, 150, 25);
 		driverPanel.add(textFieldRaces);
 
 		textFieldPodiums = new JTextField();
+		textFieldPodiums.setToolTipText("Podiums reached by the driver");
 		textFieldPodiums.setColumns(10);
 		textFieldPodiums.setBounds(163, 568, 150, 25);
 		driverPanel.add(textFieldPodiums);
 
 		textFieldWins = new JTextField();
+		textFieldWins.setToolTipText("Races winned by the driver");
 		textFieldWins.setColumns(10);
 		textFieldWins.setBounds(163, 616, 150, 25);
 		driverPanel.add(textFieldWins);
@@ -880,6 +944,8 @@ public class App {
 								JOptionPane.showMessageDialog(frmKartingdatabase, imgException.getMessage(), "Error",
 										JOptionPane.ERROR_MESSAGE);
 							}
+						} else {
+							lblDriverImg.setIcon(null);
 						}
 						DriverDAO.updateDriver(driver, name, dob, age, laps, races, podiums, wins, img);
 						JOptionPane.showMessageDialog(frmKartingdatabase, "Driver updated successfully");
@@ -941,7 +1007,7 @@ public class App {
 		teamPanel.add(lblTeamImg);
 
 		JLabel lblImage = new JLabel("Select Image:");
-		lblImage.setBounds(348, 478, 92, 14);
+		lblImage.setBounds(348, 475, 92, 15);
 		driverPanel.add(lblImage);
 
 		textFieldDriverImageText = new JTextField();
@@ -1543,6 +1609,7 @@ public class App {
 		raceResultsPanel.add(comboBoxDriverResult);
 
 		textFieldPosition = new JTextField();
+		textFieldPosition.setToolTipText("Position in the race");
 		textFieldPosition.setBounds(993, 158, 125, 25);
 		raceResultsPanel.add(textFieldPosition);
 		textFieldPosition.setColumns(10);
@@ -1642,6 +1709,7 @@ public class App {
 		raceResultsPanel.add(comboBoxFilterByDriver);
 		
 		centerAllTables();
+		paintWallpaper(panels);
 		refreshAll();
 	}
 }

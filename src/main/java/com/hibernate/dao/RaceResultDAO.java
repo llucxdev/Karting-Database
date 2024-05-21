@@ -114,7 +114,7 @@ public class RaceResultDAO {
             String constraintName = e.getConstraintName();
             if (constraintName != null) {
                 if (constraintName.contains("PRIMARY")) {
-                    throw new PrimaryKeyViolationException("Primary keys already exist in the database", e);
+                    throw new PrimaryKeyViolationException("The driver has already a position in this race", e);
                 } else if (constraintName.contains("position")) {
                     throw new PositionOccupiedException("The position is already occupied by another driver", e);
                 }
