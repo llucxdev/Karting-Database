@@ -853,6 +853,7 @@ public class App {
 		driverPanel.add(btnClearAll);
 
 		JButton btnAddDriver = new JButton("Add");
+		btnAddDriver.setMnemonic('a');
 		btnAddDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -905,6 +906,7 @@ public class App {
 		driverPanel.add(btnAddDriver);
 
 		JButton btnUpdateDriver = new JButton("Update");
+		btnUpdateDriver.setMnemonic('u');
 		btnUpdateDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (driver_id == 0) {
@@ -964,6 +966,7 @@ public class App {
 		driverPanel.add(btnUpdateDriver);
 
 		JButton btnDeleteDriver = new JButton("Delete");
+		btnDeleteDriver.setMnemonic('d');
 		btnDeleteDriver.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (driver_id == 0) {
@@ -1066,6 +1069,7 @@ public class App {
 		teamPanel.add(btnSelectTeamImage);
 
 		JButton btnAddTeam = new JButton("Add");
+		btnAddTeam.setMnemonic('a');
 		btnAddTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -1101,6 +1105,7 @@ public class App {
 		teamPanel.add(btnAddTeam);
 
 		JButton btnUpdateTeam = new JButton("Upd");
+		btnUpdateTeam.setMnemonic('u');
 		btnUpdateTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -1143,6 +1148,7 @@ public class App {
 		teamPanel.add(btnUpdateTeam);
 
 		JButton btnDeleteTeam = new JButton("Del");
+		btnDeleteTeam.setMnemonic('d');
 		btnDeleteTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (team_id == 0) {
@@ -1212,6 +1218,7 @@ public class App {
 		teamPanel.add(comboBoxRemoveDriver);
 
 		JButton btnAddDriverToTeam = new JButton("Add");
+		btnAddDriverToTeam.setMnemonic('d');
 		btnAddDriverToTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxAddDriver.getSelectedItem();
@@ -1233,6 +1240,7 @@ public class App {
 		teamPanel.add(btnAddDriverToTeam);
 
 		JButton btnRemoveDriverFromTeam = new JButton("Remove");
+		btnRemoveDriverFromTeam.setMnemonic('r');
 		btnRemoveDriverFromTeam.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxRemoveDriver.getSelectedItem();
@@ -1253,6 +1261,7 @@ public class App {
 		teamPanel.add(btnRemoveDriverFromTeam);
 
 		JButton btnAddKart = new JButton("Add");
+		btnAddKart.setMnemonic('a');
 		btnAddKart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				Kart kart = new Kart(true);
@@ -1265,6 +1274,7 @@ public class App {
 		kartPanel.add(btnAddKart);
 
 		JButton btnDeleteKart = new JButton("Delete");
+		btnDeleteKart.setMnemonic('d');
 		btnDeleteKart.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (kart_id == 0) {
@@ -1329,6 +1339,7 @@ public class App {
 		kartPanel.add(lblTxt);
 
 		JButton btnAssign = new JButton("Assign");
+		btnAssign.setMnemonic('s');
 		btnAssign.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxAssignDriver.getSelectedItem();
@@ -1371,6 +1382,7 @@ public class App {
 		lapPanel.add(lblLapTime);
 
 		JButton btnUnassign = new JButton("Unassign");
+		btnUnassign.setMnemonic('u');
 		btnUnassign.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxUnassignDriver.getSelectedItem();
@@ -1410,6 +1422,7 @@ public class App {
 		lapPanel.add(comboBoxDriverLap);
 
 		JButton btnStartLap = new JButton("Start lap");
+		btnStartLap.setMnemonic('s');
 		btnStartLap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				String driverName = (String) comboBoxDriverLap.getSelectedItem();
@@ -1451,6 +1464,7 @@ public class App {
 		lapPanel.add(btnStartLap);
 
 		JButton btnFinishLap = new JButton("Finish lap");
+		btnFinishLap.setMnemonic('f');
 		btnFinishLap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -1473,6 +1487,7 @@ public class App {
 		lapPanel.add(btnFinishLap);
 
 		JButton btnDeleteLap = new JButton("Delete lap");
+		btnDeleteLap.setMnemonic('d');
 		btnDeleteLap.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (lap_id != 0) {
@@ -1510,6 +1525,7 @@ public class App {
 		textFieldRaceLaps.setColumns(10);
 
 		JButton btnAddRace = new JButton("Add race");
+		btnAddRace.setMnemonic('a');
 		btnAddRace.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -1536,6 +1552,7 @@ public class App {
 		racePanel.add(btnAddRace);
 
 		JButton btnUpdateRace = new JButton("Update race");
+		btnUpdateRace.setMnemonic('u');
 		btnUpdateRace.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				try {
@@ -1563,6 +1580,7 @@ public class App {
 		racePanel.add(btnUpdateRace);
 
 		JButton btnDeleteRace = new JButton("Delete race");
+		btnDeleteRace.setMnemonic('d');
 		btnDeleteRace.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (race_id != 0) {
@@ -1615,6 +1633,7 @@ public class App {
 		textFieldPosition.setColumns(10);
 
 		JButton btnAddResult = new JButton("Add result");
+		btnAddResult.setMnemonic('a');
 		btnAddResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -1649,6 +1668,7 @@ public class App {
 		raceResultsPanel.add(btnAddResult);
 
 		JButton btnDeleteResult = new JButton("Delete result");
+		btnDeleteResult.setMnemonic('d');
 		btnDeleteResult.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if (raceResults_raceId != 0 || raceResults_driverId != 0) {
