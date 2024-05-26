@@ -1,0 +1,11 @@
+Nota: 1.25
+
+  De los mejores trabajos que he visto nunca, a todos los niveles!! He visto proyectos de Segundo menos complejos que tu trabajo final de Primero... !! Enhorabuena.
+  He intentado reventarlo haciendo bastantes pruebas pero no ha habido manera ;) 
+  Tiene de todo: dependencias con librerías externas, imágenes, tablas muchos a muchos, threads, herencia, componentes de Swing que no hemos usado... Me dejo mil cosas, seguro!
+    En fin, así da gusto corregir!
+
+  Por ponerte un 'pero', tu programa tiene algunas deficiencias técnicas en cuanto a eficiencia/velocidad. No deberías tener una función como refreshAll(), que se dedica a refrescar todas las tablas.
+  Es innecesario refrescar siempre todo, debes hacerlo solo cuando el usuario vaya a mirar una tabla en concreto. Con tablas grandes con muchas filas, puede suponer un problema el balanceo de la carga.
+  Apenas se nota por las dimensiones de la BD, pero como sé que eres muy perfeccionista ;-) te lo digo para que lo tengas en cuenta. 
+  La solución pasaría por tener en cuenta el foco de donde está el usuario y refrescar lo imprescindible.
