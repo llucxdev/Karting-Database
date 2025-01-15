@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  db:
+    image: mysql:8.0
+    container_name: karting-db
+    environment:
+      MYSQL_ROOT_PASSWORD: alumno
+      MYSQL_USER: alumno
+      MYSQL_PASSWORD: alumno
+      MYSQL_DATABASE: karting
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./karting.sql:/docker-entrypoint-initdb.d/karting.sql
+      - db_data:/var/lib/mysql
+volumes:
+  db_data:
